@@ -1,47 +1,6 @@
-# Dependencias del proyecto
-
-Django==4.2.7          # Framework web principal
-
-reportlab==4.0.7       # Generación de PDFs para inventarios
-
-Pillow==10.1.0         # Procesamiento de imágenes
-
-django-widget-tweaks==1.5.0  # Personalización de widgets de formularios
-
-# 8. Ejecutar migraciones (crea la base de datos)
-
-python manage.py makemigrations
-
-python manage.py migrate
-
-
-
-# 9. Crear datos iniciales (departamentos)
-
-python manage.py crear_datos_iniciales
-
-
-
-# 10. Crear el super usuario root
-python manage.py crear_root
-
-
-# 11. Iniciar el servidor de desarrollo
-
-python manage.py runserver
-python manage.py runserver 0.0.0.0:8000
-
-
-https://chat.z.ai/c/06277ad6-dc8f-4c6c-b1f3-fd53fc2bfb4e
-
-Para que el sistema de capacitación funcione, un administrador debe crear un curso desde la consola de Python (python manage.py shell) introduciendo las preguntas en formato JSON. Ejemplo:
-from core.models import CursoCapacitacion
-CursoCapacitacion.objects.create(
-    titulo="Normativa de Seguridad Informática",
-    descripcion="Evaluación sobre el DL 370/2019 y la Resolución 128/2019.",
-    preguntas=[
-        {"p": "¿Qué Decreto-Ley es la norma marco de la informatización en Cuba?", "o": ["DL 35/2021", "DL 370/2019", "DL 38/2023", "DL 370/2018"], "r": 1},
-        {"p": "¿Cuántos caracteres mínimos exige la Res. 128/2019 para las contraseñas?", "o": ["6", "10", "8", "12"], "r": 2},
-        {"p": "¿Qué organismo emite las resoluciones de seguridad informática?", "o": ["MINCOM", "MIC", "UPEC", "MINED"], "r": 0}
-    ]
-)
+Django==4.2.7
+reportlab==4.0.7
+Pillow==10.1.0
+django-widget-tweaks==1.5.0
+pyotp==2.9.0
+qrcode==7.4.2
