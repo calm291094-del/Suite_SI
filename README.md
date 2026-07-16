@@ -1,6 +1,12 @@
 # 🛡️ Suite de Seguridad Informática
 
-Sistema integral de gestión de seguridad informática desarrollado con Django para entidades cubanas. Cumple con los marcos legales vigentes: Decreto-Ley 370/2019, Resoluciones 128/2019 y 129/2019 del MINCOM, y Decreto-Ley 38/2023 de Ciberseguridad.
+<div align="center">
+  <img src="https://github.com/calm291094-del/Suite_SI/blob/main/Suite-Icon.png" alt="KrootCorp Logo" width="200">
+  <br>
+  <strong> Sistema integral de gestión de seguridad informática desarrollado con Django para entidades cubanas. Cumple con los marcos legales vigentes: Decreto-Ley 370/2019, Resoluciones 128/2019 y 129/2019 del MINCOM, y Decreto-Ley 38/2023 de Ciberseguridad. </strong>
+  <br>
+  <em>Inspirado en el desarrollo de actividades de la indole de SI.</em>
+</div>
 
 ## ✨ Características
 
