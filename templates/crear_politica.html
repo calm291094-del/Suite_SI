@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block titulo %}Crear Política{% endblock %}
+{% block contenido %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-title"><i class="fas fa-plus"></i> Nueva Política de Seguridad</div>
+        <form method="post">{% csrf_token %}
+            <div class="form-group">
+                <label><i class="fas fa-heading"></i> Nombre de la Política</label>
+                {{ form.nombre }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Contenido / Texto de la Política</label>
+                {{ form.contenido }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-calendar"></i> Fecha de Vencimiento</label>
+                {{ form.fecha_vigencia }}
+                <span class="form-hint">Fecha en la que esta política deberá ser revisada y actualizada.</span>
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'politicas' %}" class="btn-outline">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar Política</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

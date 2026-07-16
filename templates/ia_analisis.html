@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block titulo %}Centro de IA - Detección de Anomalías{% endblock %}
+
+{% block contenido %}
+<div class="admin-page">
+
+    <div class="page-header">
+        <div>
+            <h1><i class="fas fa-brain"></i> Centro de Inteligencia Artificial</h1>
+            <p class="text-muted">Motor de análisis heurístico en tiempo real basado en patrones de comportamiento del sistema local.</p>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="badge badge-blue" style="font-size:0.8rem; padding:6px 12px;">
+                <i class="fas fa-sync-alt fa-spin" style="margin-right:4px;"></i> Actualizando cada 30s
+            </span>
+        </div>
+    </div>
+
+    <!-- ═══ FILA SUPERIOR: SEMÁFORO DE RIESGO ═══ -->
+    <div class="form-card" style="margin-bottom: 24px; text-align: center; padding: 30px;">
+        <div style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 10px;">Estado General del Sistema</div>
+        
+        <div id="contenedorSemaforo" style="position: relative; width: 100%; max-width: 400px; height: 24px; background: rgba(0,0,0,0.4); border-radius: 12px; margin: 0 auto; overflow: hidden;">
+            <div id="barraRiesgo" style="height: 100%; width: 0%; background: linear-gradient(90deg, #00f5a0, #fee440, #ff3860); border-radius: 12px; transition: width 0.8s ease;"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px;">
+            <div>
+                <span id="textoEstado" style="font-size: 2.2rem; font-weight: 700; color: var(--accent-cyan);">ANALIZANDO...</span>
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Último escaneo: <span id="horaEscaneo">--:--</span></p>
+            </div>
+            <div id="contenedorPunt" style="text-align: right;">
+                <div style="font-size: 3.5rem; font-weight: 700; font-family: var(--font-mono); line-height: 1;" id="puntuacionGrande">0<span style="font-size: 1.5rem;">%</span></div>
+                <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em;">Índice de Riesgo</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ TARJETAS DE ESTADÍSTICAS CLAVE ═══ -->
+    <div class="dash-stats" style="margin-bottom: 24px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #ff3860;"><i class="fas fa-shield-virus"></i></div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number" id="anomaliasCount">0</span>
+                <span class="dash-stat-label">Anomalías Detectadas</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #fee440;"><i class="fas fa-triangle-exclamation"></i></div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number" id="fallosHora">0</span>
+                <span class="dash-stat-label">Fallos (Última Hora)</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #00bbf9;"><i class="fas fa-clock-rotate-left"></i></div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number" id="sesionesTotales">0</span>
+                <span class="dash-stat-label">Sesiones (7 días)</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #a78bfa;"><i class="fas fa-microchip"></i></div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number" id="cambiosHardware">0</span>
+                <span class="dash-stat-label">Mods. Hardware (7 días)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ PANEL DE ANOMALÍAS DETECTADAS ═══ -->
+    <div class="dash-panel">
+        <div class="dash-panel-header">
+            <h2><i class="fas fa-list-check-double"></i> Registro de Anomalías Detectadas</h2>
+            <span id="badgeEstadoIA" class="badge badge-green" style="font-size: 0.75rem; padding: 4px 10px;">Sistema Estable</span>
+        </div>
+        <div class="dash-panel-body" id="listaAnomalias" style="min-height: 200px;">
+            <p class="empty-text">Esperando análisis de la base de datos...</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts_extras %}
+
+<script>
+let temporizadorIA = null;
+
+function cargarIA() {
+    // CORREGIDO: apuntar a la URL de la API, no a la de la página
+    fetch('{% url "api_ia_analisis" %}')
+    .then(r => {
+        if (!r.ok) throw new Error('Error HTTP ' + r.status);
+        return r.json();
+    })
+    .then(data => {
+
+        // Si la API devolvió error interno, mostrarlo
+        if (data.error_detalle) {
+            console.error('Error del motor IA:', data.error_detalle);
+            document.getElementById('textoEstado').textContent = 'ERROR INTERNO';
+            document.getElementById('textoEstado').style.color = '#ff3860';
+            document.getElementById('puntuacionGrande').innerHTML = 'ERR<span style="font-size:1.5rem;"></span>';
+            return;
+        }
+
+        // 1. Barra de riesgo
+        document.getElementById('barraRiesgo').style.width = data.puntuacion + '%';
+
+        // 2. Textos y colores
+        const textoEstado = document.getElementById('textoEstado');
+        const contenedorPunt = document.getElementById('contenedorPunt');
+
+        textoEstado.textContent = data.estado;
+        textoEstado.style.color = data.color;
+        contenedorPunt.style.color = data.color;
+        document.getElementById('puntuacionGrande').innerHTML = data.puntuacion + '<span style="font-size: 1.5rem;">%</span>';
+
+        // Hora del escaneo
+        const ahora = new Date();
+        document.getElementById('horaEscaneo').textContent = ahora.toLocaleTimeString('es-CU', {
+            hour: '2-digit', minute: '2-digit', second: '2-digit'
+        });
+
+        // Estadísticas clave
+        document.getElementById('anomaliasCount').textContent = data.anomalias.length;
+        document.getElementById('fallosHora').textContent = data.fallos_ultima_hora;
+        document.getElementById('sesionesTotales').textContent = data.sesiones_totales;
+        document.getElementById('cambiosHardware').textContent = data.anomalias.filter(
+            a => a.tipo === 'Actividad Sospechosa de Hardware'
+        ).length;
+
+        // CORREGIDO: badgeEstadoIA, no badgeIA
+        const badgeEstadoIA = document.getElementById('badgeEstadoIA');
+        if (data.anomalias.length === 0) {
+            badgeEstadoIA.className = 'badge badge-green';
+            badgeEstadoIA.textContent = 'Sistema Estable';
+        } else {
+            badgeEstadoIA.className = 'badge badge-red';
+            badgeEstadoIA.textContent = data.anomalias.length + ' Alerta' + (data.anomalias.length === 1 ? '' : 's');
+        }
+
+        // Re-programar siguiente ciclo (setTimeout, no setInterval, para evitar solapamiento)
+        if (temporizadorIA) clearTimeout(temporizadorIA);
+        temporizadorIA = setTimeout(cargarIA, 30000);
+    })
+    .catch(err => {
+        console.error('Error cargando IA:', err);
+        document.getElementById('textoEstado').textContent = 'SIN CONEXIÓN';
+        document.getElementById('textoEstado').style.color = '#ff3860';
+        document.getElementById('puntuacionGrande').innerHTML = 'ERR<span style="font-size:1.5rem;"></span>';
+
+        // Detener reintento si hay error de conexión
+        if (temporizadorIA) {
+            clearTimeout(temporizadorIA);
+            temporizadorIA = null;
+        }
+    });
+}
+
+// Iniciar al cargar
+cargarIA();
+</script>
+
+{% endblock %}

@@ -1,0 +1,85 @@
+<!--
+  Página de todas las notificaciones del usuario.
+  Permite marcar como leídas individualmente o todas a la vez.
+-->
+{% extends 'base.html' %}
+
+{% block titulo %}Notificaciones - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="notifs-page">
+    <div class="page-header">
+        <h1><i class="fas fa-bell"></i> Notificaciones</h1>
+        <p>Todas sus notificaciones del sistema. 
+           Las alertas de cambios de hardware aparecen aquí automáticamente.</p>
+        <button onclick="marcarTodasLeidas()" class="btn-outline">
+            <i class="fas fa-check-double"></i> Marcar todas como leídas
+        </button>
+    </div>
+
+    {% if notificaciones %}
+    <div class="notifs-list">
+        {% for n in notificaciones %}
+        <div class="notif-item {% if not n.leida %}notif-unread{% endif %}" id="notif-{{ n.id }}">
+            <div class="notif-icon-wrap">
+                <i class="fas 
+                    {% if n.tipo == 'cambio_hardware' %}fa-microchip notif-icon-warning
+                    {% elif n.tipo == 'nuevo_usuario' %}fa-user-plus notif-icon-info
+                    {% elif n.tipo == 'alerta_seguridad' %}fa-triangle-exclamation notif-icon-danger
+                    {% elif n.tipo == 'nuevo_documento' %}fa-file-arrow-up notif-icon-success
+                    {% else %}fa-circle-info notif-icon-default
+                    {% endif %}
+                "></i>
+            </div>
+            <div class="notif-content">
+                <div class="notif-top">
+                    <h3>{{ n.titulo }}</h3>
+                    {% if not n.leida %}
+                        <button onclick="marcarLeida({{ n.id }})" class="btn-sm" title="Marcar como leída">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    {% endif %}
+                </div>
+                <p class="notif-msg">{{ n.mensaje|linebreaksbr }}</p>
+                <span class="notif-date">{{ n.fecha|date:"d/m/Y H:i" }}</span>
+                {% if n.enlace %}
+                <a href="{{ n.enlace }}" class="notif-link">
+                    <i class="fas fa-arrow-right"></i> Ver detalle
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-bell-slash"></i>
+        <p>No tiene notificaciones.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Marcar una notificación como leída vía AJAX
+    function marcarLeida(notifId) {
+        fetch(`/api/notificacion/${notifId}/leida/`, {
+            headers: { 'X-CSRFToken': getCSRF() },
+        }).then(() => {
+            const el = document.getElementById(`notif-${notifId}`);
+            if (el) el.classList.remove('notif-unread');
+        });
+    }
+
+    // Marcar todas como leídas
+    function marcarTodasLeidas() {
+        fetch('/api/notificaciones/todas-leidas/', {
+            headers: { 'X-CSRFToken': getCSRF() },
+        }).then(() => {
+            document.querySelectorAll('.notif-unread').forEach(el => el.classList.remove('notif-unread'));
+            const badge = document.getElementById('notifBadge');
+            if (badge) { badge.classList.add('hidden'); badge.textContent = '0'; }
+            showNotification('Todas las notificaciones marcadas como leídas', 'success');
+        });
+    }
+</script>
+{% endblock %}

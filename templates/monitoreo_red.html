@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block titulo %}Monitoreo de Red{% endblock %}
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-line"></i> Monitoreo de Red en Tiempo Real</h1>
+        <span class="badge badge-blue" style="font-size: 0.8rem; padding: 5px 10px;">SIMULACIÓN (Conectar a Zabbix para datos reales)</span>
+    </div>
+
+    <div class="dash-grid" style="grid-template-columns: 1fr 1fr;">
+        <div class="dash-panel">
+            <div class="dash-panel-header"><h2><i class="fas fa-wifi"></i> Ancho de Banda (LAN)</h2></div>
+            <div class="dash-panel-body" style="padding: 20px; height: 250px;">
+                <canvas id="chartBandwidth"></canvas>
+            </div>
+        </div>
+        <div class="dash-panel">
+            <div class="dash-panel-header"><h2><i class="fas fa-clock"></i> Latencia (Ping ms)</h2></div>
+            <div class="dash-panel-body" style="padding: 20px; height: 250px;">
+                <canvas id="chartLatencia"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+function simularDatos() {
+    const labels = Array.from({length: 15}, (_, i) => `${String(i).padStart(2, '0')}:00`);
+    const bw = labels.map(() => Math.floor(Math.random() * 800) + 200); // 200-1000 Mbps
+    const lat = labels.map(() => Math.floor(Math.random() * 30) + 5);  // 5-35 ms
+
+    const opcionesLinea = { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } };
+
+    new Chart(document.getElementById('chartBandwidth'), {
+        type: 'line',
+        data: { labels, datasets: [{ label: 'Mbps', data: bw, borderColor: '#00bbf9', backgroundColor: 'rgba(0,187,249,0.1)', fill: true, tension: 0.4 }] },
+        options: opcionesLinea
+    });
+
+    new Chart(document.getElementById('chartLatencia'), {
+        type: 'bar',
+        data: { labels, datasets: [{ label: 'ms', data: lat, backgroundColor: lat.map(l => l > 20 ? '#ff3860' : '#00f5a0') }] },
+        options: opcionesLinea
+    });
+}
+simularDatos();
+// Si conectas a Zabbix, reemplazar esta función por un fetch() a tu API interna
+</script>
+{% endblock %}

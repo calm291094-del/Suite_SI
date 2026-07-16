@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% block titulo %}Políticas de Seguridad{% endblock %}
+{% block contenido %}
+<div class="page-header">
+    <h1><i class="fas fa-file-shield"></i> Gestión de Políticas de Seguridad</h1>
+    <p>Res. 105/2020: Revisión periódica del SGSI y actualización de políticas.</p>
+    <div class="header-actions">
+        <a href="{% url 'crear_politica' %}" class="btn-primary"><i class="fas fa-plus"></i> Nueva Política</a>
+    </div>
+</div>
+
+<div class="table-container">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Vencimiento</th>
+                <th>Estado</th>
+                <th>Creada por</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in politicas %}
+            <tr class="table-row-hover">
+                <td><strong style="color:var(--text-primary)">{{ p.nombre }}</strong></td>
+                <td style="font-family: var(--font-mono); font-size: 0.85rem;">{{ p.fecha_vigencia|date:"d/m/Y" }}</td>
+                <td>
+                    {% if p.estado_calculado == 'vencida' %}
+                        <span class="badge badge-red"><i class="fas fa-exclamation-triangle"></i> VENCIDA (Hace {{ p.dias_restantes }} días)</span>
+                    {% elif p.estado_calculado == 'por_vencer' %}
+                        <span class="badge badge-orange"><i class="fas fa-clock"></i> VENCE EN {{ p.dias_restantes }} DÍAS</span>
+                    {% else %}
+                        <span class="badge badge-green">Vigente</span>
+                    {% endif %}
+                </td>
+                <td>{{ p.creado_por.perfil.nombre_completo|default:"—" }}</td>
+                <td>
+                    <a href="{% url 'detalle_politica' p.id %}" class="btn-sm" title="Ver/Editar"><i class="fas fa-pen"></i></a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="empty-text">No hay políticas registradas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block active_dash %}active{% endblock %}
+{% block titulo %}Historial de Sesiones - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-clock-rotate-left"></i> {{ titulo }}</h1>
+    </div>
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Fecha/Hora</th>
+                    <th>IP</th>
+                    <th>Navegador</th>
+                    <th>SO</th>
+                    <th>Dispositivo</th>
+                    <th>Estado</th>
+                    <th>Duración</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sesiones %}
+                <tr class="table-row-hover">
+                    <td><strong>{{ s.user.username }}</strong></td>
+                    <td style="font-family:var(--font-mono);font-size:0.82rem;">{{ s.fecha_hora|date:"d/m/Y H:i:s" }}</td>
+                    <td><code>{{ s.direccion_ip }}</code></td>
+                    <td>{{ s.navegador }}</td>
+                    <td>{{ s.sistema_operativo }}</td>
+                    <td>{{ s.dispositivo }}</td>
+                    <td>
+                        {% if s.exitosa %}
+                            <span class="badge badge-green">Exitoso</span>
+                        {% else %}
+                            <span class="badge badge-yellow">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-family:var(--font-mono);font-size:0.82rem;">{{ s.duracion }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="9" class="empty-text">No hay registros de sesiones.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

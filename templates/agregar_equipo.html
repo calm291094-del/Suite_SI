@@ -1,0 +1,91 @@
+<!--
+  Formulario para agregar un nuevo equipo al inventario.
+  Solo accesible para roles administrativos.
+-->
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block active_inv %}active{% endblock %}
+{% block titulo %}Agregar Equipo - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="form-page">
+    <div class="page-header">
+        <h1><i class="fas fa-plus"></i> Agregar Equipo</h1>
+        <p>Registre un nuevo equipo de cómputo en el inventario. 
+           Después podrá agregar los componentes individualmente.</p>
+    </div>
+
+    <div class="form-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label><i class="fas fa-barcode"></i> Identificación *</label>
+                    {{ form.identificacion }}
+                    {% if form.identificacion.errors %}<span class="field-error">{{ form.identificacion.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-desktop"></i> Tipo de equipo</label>
+                    {{ form.tipo_equipo }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Marca</label>
+                    {{ form.marca }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-tag"></i> Modelo</label>
+                    {{ form.modelo }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-circle-check"></i> Estado</label>
+                    {{ form.estado }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-building"></i> Departamento</label>
+                    {{ form.departamento }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-network-wired"></i> Dirección IP</label>
+                    {{ form.ip }}
+                    {% if form.ip.errors %}<span class="field-error">{{ form.ip.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-fingerprint"></i> Dirección MAC</label>
+                    {{ form.mac }}
+                    {% if form.mac.errors %}<span class="field-error">{{ form.mac.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group full-width">
+                    <label><i class="fas fa-location-dot"></i> Ubicación *</label>
+                    {{ form.ubicacion }}
+                    {% if form.ubicacion.errors %}<span class="field-error">{{ form.ubicacion.errors.0 }}</span>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-laptop-code"></i> Sistema Operativo</label>
+                    {{ form.sistema_operativo }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-hashtag"></i> No. Inventario</label>
+                    {{ form.numero_inventario }}
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Responsable</label>
+                    {{ form.responsable }}
+                </div>
+                <div class="form-group full-width">
+                    <label><i class="fas fa-sticky-note"></i> Observaciones</label>
+                    {{ form.observaciones }}
+                </div>
+            </div>
+            <div class="form-actions">
+                <a href="{% url 'admin_inventario' %}" class="btn-outline">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Registrar Equipo
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block titulo %}Verificación 2FA - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="auth-container">
+    <div class="auth-card" style="max-width:420px;">
+        <div class="auth-header">
+            <div class="auth-icon"><i class="fas fa-shield-halved"></i></div>
+            <h1>Verificación en Dos Pasos</h1>
+            <p class="auth-subtitle">Ingrese el código de su app authenticator</p>
+        </div>
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group" style="text-align:center;">
+                <label style="margin-bottom:12px;">Código de 6 dígitos</label>
+                {{ form.codigo }}
+                {% if form.codigo.errors %}
+                    <span class="field-error">{{ form.codigo.errors.0 }}</span>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn-primary btn-full" style="margin-top:12px;">
+                <i class="fas fa-check-circle"></i> Verificar
+            </button>
+        </form>
+        <div class="auth-footer">
+            <p><a href="{% url 'login' %}"><i class="fas fa-arrow-left"></i> Volver al login</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}

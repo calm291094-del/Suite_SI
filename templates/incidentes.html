@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block titulo %}Registro de Incidentes{% endblock %}
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-shield-virus"></i> Plan de Respuesta a Incidentes</h1>
+        <p class="text-muted">Res. 128/2019 Art. 20: Gestión de incidentes de seguridad.</p>
+        <div class="header-actions">
+            <button class="btn-primary" onclick="abrirModalCrear()">
+                <i class="fas fa-plus"></i> Registrar Incidente
+            </button>
+        </div>
+    </div>
+
+    <!-- Línea de Tiempo de Incidentes -->
+    <div style="position: relative; padding-left: 30px;">
+        <!-- Línea vertical -->
+        <div style="position: absolute; left: 8px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(--accent-cyan), var(--accent-magenta)); opacity: 0.3;"></div>
+        
+        {% for inc in incidentes %}
+        <div class="history-item" id="row-inc-{{ inc.id }}" style="margin-bottom: 24px;">
+            <!-- Punto en la línea -->
+            <div style="position: absolute; left: -26px; top: 14px; width: 14px; height: 14px; border-radius: 50%; background: {% if inc.estado == 'abierto' %}var(--accent-red){% elif inc.estado == 'contencion' %}var(--accent-yellow){% else %}var(--accent-green){% endif %}; border: 2px solid var(--bg-primary); box-shadow: 0 0 8px rgba(0,245,212,0.4);"></div>
+            
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                    <div>
+                        <span class="comp-count" style="margin-bottom: 4px;">INC-{{ inc.id }}</span>
+                        <h4 style="font-size: 1rem; color: var(--text-primary);">{{ inc.tipo_incidente }}</h4>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">Respondedor: {{ inc.respondedor.perfil.nombre_completo }} — {{ inc.fecha|date:"d/m/Y H:i" }}</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                        <span class="badge {% if inc.estado == 'abierto' %}badge-red{% elif inc.estado == 'contencion' %}badge-orange{% else %}badge-green{% endif %}">{{ inc.get_estado_display }}</span>
+                        <button onclick="abrirModalEditar({{ inc.id }})" class="btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
+                        <button onclick="eliminarIncidente({{ inc.id }})" class="btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+                
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px;">{{ inc.descripcion }}</p>
+                
+                {% if inc.lecciones_aprendidas %}
+                <div style="background: rgba(254,228,64,0.06); border: 1px solid rgba(254,228,64,0.15); border-radius: 8px; padding: 12px;">
+                    <strong style="font-size: 0.85rem; color: var(--accent-yellow);"><i class="fas fa-lightbulb"></i> Lecciones Aprendidas:</strong>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 6px;">{{ inc.lecciones_aprendidas }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <p class="empty-text" style="margin-left: 30px;">No hay incidentes registrados.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="modal" id="incModal" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarModal()"></div>
+    <div class="modal-content modal-lg">
+        <h3 id="modalTitulo" style="margin-bottom:20px;"><i class="fas fa-shield-virus"></i> Nuevo Incidente</h3>
+        <form id="incForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="inc_id" id="incId" value="">
+            
+            <div class="form-group">
+                <label><i class="fas fa-tag"></i> Tipo de Incidente</label>
+                {{ form.tipo_incidente }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Descripción del Incidente</label>
+                {{ form.descripcion }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-spinner"></i> Estado Actual</label>
+                {{ form.estado }}
+                <span class="form-hint">Abierto: Recién reportado. Contención: Siendo atendido. Cerrado: Resuelto.</span>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-lightbulb"></i> Lecciones Aprendidas</label>
+                <textarea name="lecciones_aprendidas" class="input-field" rows="3" placeholder="¿Qué se aprendió? ¿Qué se debe mejorar para evitar que vuelva a ocurrir?">{{ form.instance.lecciones_aprendidas|default:"" }}</textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalCrear() {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Registrar Incidente';
+    document.getElementById('incId').value = '';
+    document.getElementById('incForm').reset();
+    document.getElementById('incModal').style.display = 'flex';
+}
+
+function abrirModalEditar(id) {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen"></i> Editar Incidente';
+    fetch(`/api/incidentes/datos/${id}/`)
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('incId').value = data.id;
+        document.querySelector('[name="tipo_incidente"]').value = data.tipo_incidente;
+        document.querySelector('[name="descripcion"]').value = data.descripcion;
+        document.querySelector('[name="estado"]').value = data.estado;
+        document.querySelector('[name="lecciones_aprendidas"]').value = data.lecciones_aprendidas;
+        document.getElementById('incModal').style.display = 'flex';
+    });
+}
+
+function cerrarModal() { document.getElementById('incModal').style.display = 'none'; }
+
+function eliminarIncidente(id) {
+    if (!confirm('¿Eliminar este registro de incidente?')) return;
+    fetch(`/api/admin/incidentes/eliminar/${id}/`, { method: 'POST', headers: { 'X-CSRFToken': getCSRF() } })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            const fila = document.getElementById(`row-inc-${id}`);
+            fila.style.opacity = '0'; setTimeout(() => fila.remove(), 300);
+            showNotification('Incidente eliminado', 'success');
+        } else { showNotification(data.error, 'error'); }
+    });
+}
+</script>
+{% endblock %}

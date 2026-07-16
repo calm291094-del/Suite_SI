@@ -1,0 +1,62 @@
+<!--
+  Página completa de la base legal vigente en Cuba.
+  Muestra cada norma con sus artículos clave y un resumen detallado.
+  Incluye referencias a las gacetas oficiales donde fueron publicadas.
+-->
+{% extends 'base.html' %}
+
+{% block active_legal %}active{% endblock %}
+{% block titulo %}Base Legal Vigente - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="legal-page">
+    <div class="page-header">
+        <h1><i class="fas fa-scale-balanced"></i> Base Legal Vigente en Cuba</h1>
+        <p>Marco normativo completo que regula la seguridad informática en las entidades cubanas. 
+           Cada institución está obligada a conocer y cumplir estas disposiciones.</p>
+    </div>
+
+    <!-- Lista de normas con artículos -->
+    {% for norma in normas %}
+    <div class="legal-detail-card">
+        <!-- Encabezado de la norma -->
+        <div class="legal-detail-header">
+            <h2>{{ norma.numero }}</h2>
+            <h3>{{ norma.nombre }}</h3>
+            <span class="gaceta-ref"><i class="fas fa-newspaper"></i> {{ norma.gaceta }}</span>
+        </div>
+
+        <!-- Resumen ejecutivo -->
+        <div class="legal-detail-summary">
+            <h4><i class="fas fa-align-left"></i> Resumen</h4>
+            <p>{{ norma.resumen }}</p>
+        </div>
+
+        <!-- Artículos clave -->
+        <div class="legal-detail-articulos">
+            <h4><i class="fas fa-list-ol"></i> Artículos Clave</h4>
+            <div class="articulos-list">
+                {% for art_num, art_desc in norma.articulos_clave %}
+                <div class="articulo-item">
+                    <span class="articulo-num">{{ art_num }}</span>
+                    <span class="articulo-desc">{{ art_desc }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+    <!-- Nota importante sobre cumplimiento -->
+    <div class="legal-note">
+        <i class="fas fa-triangle-exclamation"></i>
+        <div>
+            <strong>Nota importante:</strong> El incumplimiento de estas disposiciones puede acarrear 
+            responsabilidades administrativas, civiles y penales según lo establecido en el 
+            Decreto-Ley 370/2019 (Art. 40) y el Código Penal cubano. Cada entidad debe designar 
+            un responsable de seguridad informática y mantener documentación actualizada de todas 
+            las medidas implementadas.
+        </div>
+    </div>
+</div>
+{% endblock %}

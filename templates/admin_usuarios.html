@@ -1,0 +1,200 @@
+<!--
+  Panel de administración de usuarios.
+  Solo visible para roles: root, admin_red, seguridad.
+  Permite: cambiar roles, activar/desactivar usuarios, eliminar.
+  El usuario root NUNCA puede ser eliminado ni desactivado.
+-->
+{% extends 'base.html' %}
+
+{% block active_ausers %}active{% endblock %}
+{% block titulo %}Gestión de Usuarios - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-users-gear"></i> Gestión de Usuarios</h1>
+        <p>Administre los usuarios del sistema: cambie roles, active/desactive cuentas. 
+           <strong>Root no puede ser eliminado ni modificado.</strong></p>
+    </div>
+
+    <!-- Leyenda de roles -->
+    <div class="roles-legend">
+        <span class="badge-role badge-root">ROOT — Super Admin</span>
+        <span class="badge-role badge-admin_red">Admin Red</span>
+        <span class="badge-role badge-seguridad">Seguridad</span>
+        <span class="badge-role badge-usuario">Usuario</span>
+    </div>
+
+    <!-- Tabla de usuarios -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Usuario</th>
+                    <th>Nombre Completo</th>
+                    <th>Cargo</th>
+                    <th>Departamento</th>
+                    <th>Rol Actual</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr class="table-row-hover 
+                    {% if not u.is_active %}row-inactive{% endif %}
+                    {% if u.perfil.rol == 'root' %}row-root{% endif %}">
+                    <td>
+                        <span class="username-cell">
+                            <i class="fas fa-user-circle"></i> {{ u.username }}
+                        </span>
+                    </td>
+                    <td>{{ u.perfil.nombre_completo|default:"—" }}</td>
+                    <td>{{ u.perfil.cargo|default:"—" }}</td>
+                    <td>{{ u.perfil.departamento|default:"—" }}</td>
+                    <td>
+                        <span class="badge-role badge-{{ u.perfil.rol }}">
+                            {{ u.perfil.get_rol_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if u.is_active %}
+                            <span class="badge badge-green">Activo</span>
+                        {% else %}
+                            <span class="badge badge-red">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td>
+                        <div class="action-group">
+                            <!-- Cambiar rol (no para root) -->
+                            {% if u.perfil.rol != 'root' %}
+                            <select class="select-sm" 
+                                    onchange="cambiarRol({{ u.id }}, this.value)"
+                                    title="Cambiar rol">
+                                <option value="usuario" {% if u.perfil.rol == 'usuario' %}selected{% endif %}>Usuario</option>
+                                <option value="admin_red" {% if u.perfil.rol == 'admin_red' %}selected{% endif %}>Admin Red</option>
+                                <option value="seguridad" {% if u.perfil.rol == 'seguridad' %}selected{% endif %}>Seguridad</option>
+                            </select>
+                            {% endif %}
+
+                            <!-- Activar/Desactivar (no para root) -->
+                            {% if u.perfil.rol != 'root' %}
+                            <button onclick="toggleUsuario({{ u.id }}, this)" 
+                                    class="btn-sm {% if u.is_active %}btn-warning{% else %}btn-success{% endif %}" 
+                                    title="{% if u.is_active %}Desactivar{% else %}Activar{% endif %}">
+                                <i class="fas {% if u.is_active %}fa-ban{% else %}fa-check{% endif %}"></i>
+                            </button>
+                            {% endif %}
+
+                            <!-- Eliminar (no para root, no para uno mismo) -->
+                            {% if u.perfil.rol != 'root' and u.id != request.user.id %}
+                            <button onclick="eliminarUsuario({{ u.id }}, '{{ u.perfil.nombre_completo|escapejs }}')" 
+                                    class="btn-sm btn-danger" title="Eliminar usuario">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% else %}
+                            <span class="btn-sm btn-disabled" title="Protegido">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal hidden" id="modalEliminarUser">
+    <div class="modal-overlay" onclick="cerrarModalUser()"></div>
+    <div class="modal-content">
+        <h3><i class="fas fa-triangle-exclamation"></i> Eliminar Usuario</h3>
+        <p>Está seguro de eliminar a <strong id="modalUserName"></strong>?</p>
+        <p class="text-muted">Se eliminará su perfil, mensajes y permisos. Esta acción es irreversible.</p>
+        <div class="modal-actions">
+            <button onclick="cerrarModalUser()" class="btn-outline">Cancelar</button>
+            <button onclick="confirmarEliminarUser()" class="btn-danger" id="btnConfirmEliminar">
+                <i class="fas fa-trash"></i> Eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let userIdToDelete = null;
+
+    // Cambiar rol de un usuario vía AJAX
+    function cambiarRol(userId, nuevoRol) {
+        fetch(`/api/usuario/${userId}/rol/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCSRF(),
+            },
+            body: JSON.stringify({ rol: nuevoRol }),
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showNotification('Rol actualizado correctamente', 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showNotification(data.error || 'Error al cambiar rol', 'error');
+                location.reload();
+            }
+        })
+        .catch(() => showNotification('Error de conexión', 'error'));
+    }
+
+    // Activar/Desactivar usuario
+    function toggleUsuario(userId, btn) {
+        fetch(`/api/usuario/${userId}/toggle/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRF() },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showNotification(`Usuario ${data.estado}`, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showNotification(data.error, 'error');
+            }
+        })
+        .catch(() => showNotification('Error de conexión', 'error'));
+    }
+
+    // Eliminar usuario (con modal de confirmación)
+    function eliminarUsuario(userId, nombre) {
+        userIdToDelete = userId;
+        document.getElementById('modalUserName').textContent = nombre;
+        document.getElementById('modalEliminarUser').classList.remove('hidden');
+    }
+    function cerrarModalUser() {
+        document.getElementById('modalEliminarUser').classList.add('hidden');
+        userIdToDelete = null;
+    }
+    function confirmarEliminarUser() {
+        if (!userIdToDelete) return;
+        fetch(`/api/usuario/${userIdToDelete}/eliminar/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRF() },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showNotification(data.mensaje, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showNotification(data.error, 'error');
+                cerrarModalUser();
+            }
+        })
+        .catch(() => showNotification('Error de conexión', 'error'));
+    }
+</script>
+{% endblock %}

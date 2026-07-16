@@ -1,0 +1,92 @@
+<!--
+  Chat interno del sistema.
+  Soporta: canal general (chat grupal) y chats privados (1 a 1).
+  Usa AJAX polling para recibir mensajes en tiempo real.
+  Solo usuarios autenticados pueden usarlo.
+-->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block active_chat %}active{% endblock %}
+{% block titulo %}Chat Interno - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="chat-page">
+    <!-- Lista de contactos (sidebar del chat) -->
+    <div class="chat-contacts" id="chatContacts">
+        <!-- Canal general -->
+        <div class="contact-item active" onclick="cambiarCanal('general', this, 'Canal General')">
+            <div class="contact-avatar channel-avatar">
+                <i class="fas fa-hashtag"></i>
+            </div>
+            <div class="contact-info">
+                <span class="contact-name">Canal General</span>
+                <span class="contact-meta">Todos los usuarios</span>
+            </div>
+        </div>
+        <!-- Separador -->
+        <div class="contacts-divider">Chats Privados</div>
+        <!-- Lista de usuarios para chat privado -->
+        {% for u in usuarios_activos %}
+        <div class="contact-item" 
+             onclick="abrirPrivado({{ u.id }}, this, '{{ u.perfil.nombre_completo|escapejs }}')">
+            <div class="contact-avatar">
+                {{ u.perfil.nombre_completo.0 }}
+            </div>
+            <div class="contact-info">
+                <span class="contact-name">{{ u.perfil.nombre_completo|truncatechars:20 }}</span>
+                <span class="contact-meta">{{ u.perfil.get_rol_display }}</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Área del chat -->
+    <div class="chat-main">
+        <!-- Header del chat actual -->
+        <div class="chat-header">
+            <button class="chat-mobile-back" onclick="toggleChatContacts()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h3 id="chatTitle">Canal General</h3>
+            <span class="chat-status">En línea</span>
+        </div>
+
+        <!-- Contenedor de mensajes -->
+        <div class="chat-messages" id="chatMessages">
+            <!-- Los mensajes se cargan vía AJAX -->
+            <div class="chat-loading">
+                <i class="fas fa-spinner fa-spin"></i> Cargando mensajes...
+            </div>
+        </div>
+
+        <!-- Input para enviar mensaje -->
+        <div class="chat-input-area">
+            <form onsubmit="enviarMensaje(event)" id="chatForm">
+                <input type="text" 
+                       id="chatInput" 
+                       class="chat-input" 
+                       placeholder="Escriba un mensaje..." 
+                       maxlength="1000"
+                       autocomplete="off">
+                <button type="submit" class="chat-send-btn" title="Enviar">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Datos del usuario actual inyectados para el JS del chat -->
+{{ user.id|json_script:"currentUserId" }}
+{{ user.username|json_script:"currentUsername" }}
+<script>
+    // Pasar datos del usuario al scope global para el chat.js
+    document.body.dataset.userid = document.getElementById('currentUserId').textContent;
+    document.body.dataset.username = document.getElementById('currentUsername').textContent;
+</script>
+{% endblock %}
+
+{% block scripts_extras %}
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% block titulo %}Gestión de Políticas{% endblock %}
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-file-shield"></i> Gestión de Políticas de Seguridad</h1>
+        <div class="header-actions">
+            <button class="btn-primary" onclick="abrirModalCrear()">
+                <i class="fas fa-plus"></i> Nueva Política
+            </button>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Vencimiento</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in politicas %}
+                <tr class="table-row-hover" id="row-pol-{{ p.id }}">
+                    <td><strong>{{ p.nombre }}</strong></td>
+                    <td style="font-family:var(--font-mono); font-size:0.85rem;">{{ p.fecha_vigencia|date:"d/m/Y" }}</td>
+                    <td>
+                        {% if p.fecha_vigencia < hoy %}
+                            <span class="badge badge-red">Vencida</span>
+                        {% elif p.fecha_vigencia <= fecha_limite %}
+                            <span class="badge badge-orange">Por vencer</span>
+                        {% else %}
+                            <span class="badge badge-green">Vigente</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <button onclick="abrirModalEditar({{ p.id }})" class="btn-sm" title="Editar"><i class="fas fa-pen"></i></button>
+                            <button onclick="eliminarPolitica({{ p.id }})" class="btn-sm btn-danger" title="Eliminar"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="empty-text">No hay políticas registradas.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Crear/Editar -->
+<div class="modal" id="polModal" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarModal()"></div>
+    <div class="modal-content modal-lg">
+        <h3 id="modalTitulo" style="margin-bottom:20px;"><i class="fas fa-file-shield"></i> Nueva Política</h3>
+        <form id="polForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="pol_id" id="polId" value="">
+            
+            <div class="form-group">
+                <label><i class="fas fa-heading"></i> Nombre</label>
+                {{ form.nombre }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Contenido</label>
+                {{ form.contenido }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-calendar"></i> Fecha de Vencimiento</label>
+                {{ form.fecha_vigencia }}
+                <span class="form-hint">Fecha límite para la próxima revisión de esta política.</span>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function abrirModalCrear() {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Nueva Política';
+    document.getElementById('polId').value = '';
+    document.getElementById('polForm').reset();
+    document.getElementById('polModal').style.display = 'flex';
+}
+
+function abrirModalEditar(id) {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen"></i> Editar Política';
+    fetch(`/api/politicas/datos/${id}/`) // Crearemos esta mini-API abajo
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('polId').value = data.id;
+        document.querySelector('[name="nombre"]').value = data.nombre;
+        document.querySelector('[name="contenido"]').value = data.contenido;
+        document.querySelector('[name="fecha_vigencia"]').value = data.fecha_vigencia;
+        document.getElementById('polModal').style.display = 'flex';
+    });
+}
+
+function cerrarModal() {
+    document.getElementById('polModal').style.display = 'none';
+}
+
+function eliminarPolitica(id) {
+    if (!confirm('¿Está seguro de que desea eliminar esta política?')) return;
+    
+    fetch(`/api/admin/politicas/eliminar/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            const fila = document.getElementById(`row-pol-${id}`);
+            fila.style.opacity = '0';
+            setTimeout(() => fila.remove(), 300);
+            showNotification('Política eliminada correctamente', 'success');
+        }
+    });
+}
+</script>
+{% endblock %}

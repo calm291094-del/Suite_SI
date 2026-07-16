@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block titulo %}Crear Ticket{% endblock %}
+{% block contenido %}
+<div class="form-page">
+    <div class="form-card">
+        <div class="form-card-title"><i class="fas fa-plus"></i> Crear Ticket de Soporte</div>
+        <form method="post">{% csrf_token %}
+            <div class="form-group"><label>Título</label>{{ form.titulo }}</div>
+            <div class="form-group"><label>Descripción</label>{{ form.descripcion }}</div>
+            <div class="form-group"><label>Prioridad</label>{{ form.prioridad }}</div>
+            <div class="form-actions">
+                <a href="{% url 'tickets' %}" class="btn-outline">Cancelar</a>
+                <button type="submit" class="btn-primary">Guardar Ticket</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

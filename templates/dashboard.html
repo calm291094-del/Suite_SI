@@ -1,0 +1,231 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block active_dash %}active{% endblock %}
+{% block titulo %}Dashboard - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="dashboard-page">
+
+    <div class="dash-header">
+        <div>
+            <h1>Bienvenido, <span class="accent">{{ perfil.nombre_completo }}</span></h1>
+            <p class="dash-subtitle">
+                Rol: <span class="badge-role badge-{{ perfil.rol }}">{{ perfil.get_rol_display }}</span>
+                {% if perfil.departamento %}
+                — Departamento: {{ perfil.departamento.nombre }}
+                {% endif %}
+            </p>
+        </div>
+        <div class="dash-date">
+            <i class="fas fa-calendar"></i>
+            <span id="currentDate"></span>
+        </div>
+    </div>
+
+    <!-- Estadísticas rápidas -->
+    <div class="dash-stats">
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #00f5d4;">
+                <i class="fas fa-file-alt"></i>
+            </div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number">{{ total_documentos }}</span>
+                <span class="dash-stat-label">Documentos</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #00bbf9;">
+                <i class="fas fa-desktop"></i>
+            </div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number">{{ total_equipos }}</span>
+                <span class="dash-stat-label">Equipos Activos</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #f15bb5;">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number">{{ total_usuarios }}</span>
+                <span class="dash-stat-label">Usuarios</span>
+            </div>
+        </div>
+        <div class="dash-stat-card">
+            <div class="dash-stat-icon" style="--glow-color: #fee440;">
+                <i class="fas fa-bell"></i>
+            </div>
+            <div class="dash-stat-info">
+                <span class="dash-stat-number">{{ notifs_no_leidas }}</span>
+                <span class="dash-stat-label">Sin Leer</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de contenido -->
+    <div class="dash-grid">
+        <!-- Documentos recientes -->
+        <div class="dash-panel">
+            <div class="dash-panel-header">
+                <h2><i class="fas fa-folder-open"></i> Documentos Recientes</h2>
+                <a href="{% url 'documentos' %}" class="dash-panel-link">Ver todos</a>
+            </div>
+            <div class="dash-panel-body">
+                {% if docs_recientes %}
+                    {% for doc in docs_recientes %}
+                    <div class="dash-list-item">
+                        <div class="dash-list-icon">
+                            <i class="fas 
+                                {% if '.pdf' in doc.nombre_original|lower %}fa-file-pdf
+                                {% elif '.doc' in doc.nombre_original|lower %}fa-file-word
+                                {% elif '.xls' in doc.nombre_original|lower %}fa-file-excel
+                                {% elif '.zip' in doc.nombre_original|lower %}fa-file-zipper
+                                {% else %}fa-file
+                                {% endif %}
+                            "></i>
+                        </div>
+                        <div class="dash-list-info">
+                            <span class="dash-list-title">{{ doc.nombre_original|truncatechars:40 }}</span>
+                            <span class="dash-list-meta">
+                                {% if doc.subido_por_id %}
+                                    {{ doc.subido_por.perfil.nombre_completo|default:"—" }}
+                                {% else %}
+                                    Sistema
+                                {% endif %}
+                                — {{ doc.fecha_subida|date:"d/m/Y" }}
+                                {% if doc.visible_todos %}
+                                    <span class="badge badge-green">Público</span>
+                                {% else %}
+                                    <span class="badge badge-orange">Restringido</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <a href="{% url 'descargar_documento' doc.id %}" class="btn-sm btn-download" title="Descargar">
+                            <i class="fas fa-download"></i>
+                        </a>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No hay documentos disponibles.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Notificaciones recientes -->
+        <div class="dash-panel">
+            <div class="dash-panel-header">
+                <h2><i class="fas fa-bell"></i> Notificaciones</h2>
+                <a href="{% url 'notificaciones' %}" class="dash-panel-link">Ver todas</a>
+            </div>
+            <div class="dash-panel-body">
+                {% if ultimas_notifs %}
+                    {% for notif in ultimas_notifs %}
+                    <div class="dash-list-item {% if not notif.leida %}unread{% endif %}">
+                        <div class="dash-list-icon">
+                            <i class="fas 
+                                {% if notif.tipo == 'cambio_hardware' %}fa-microchip text-warning
+                                {% elif notif.tipo == 'nuevo_usuario' %}fa-user-plus text-info
+                                {% elif notif.tipo == 'alerta_seguridad' %}fa-triangle-exclamation text-danger
+                                {% else %}fa-circle-info text-muted
+                                {% endif %}
+                            "></i>
+                        </div>
+                        <div class="dash-list-info">
+                            <span class="dash-list-title">{{ notif.titulo }}</span>
+                            <span class="dash-list-meta">{{ notif.fecha|date:"d/m/Y H:i" }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="empty-text">No hay notificaciones.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Accesos rápidos -->
+    <div class="dash-quick-actions">
+        <h2><i class="fas fa-bolt"></i> Accesos Rápidos</h2>
+        <div class="quick-actions-grid">
+            <a href="{% url 'documentos' %}" class="quick-action-btn">
+                <i class="fas fa-upload"></i> Subir Documento
+            </a>
+            <a href="{% url 'chat' %}" class="quick-action-btn">
+                <i class="fas fa-comments"></i> Chat Interno
+            </a>
+            <a href="{% url 'base_legal' %}" class="quick-action-btn">
+                <i class="fas fa-scale-balanced"></i> Base Legal
+            </a>
+            <a href="{% url 'efemerides' %}" class="quick-action-btn">
+                <i class="fas fa-calendar-days"></i> Efemérides
+            </a>
+            {% if perfil.es_admin %}
+            <a href="{% url 'admin_usuarios' %}" class="quick-action-btn quick-admin">
+                <i class="fas fa-users-gear"></i> Gestionar Usuarios
+            </a>
+            <a href="{% url 'admin_inventario' %}" class="quick-action-btn quick-admin">
+                <i class="fas fa-server"></i> Inventario Equipos
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('currentDate').textContent = 
+        new Date().toLocaleDateString('es-CU', { 
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+        });
+</script>
+
+<!-- Contenedor de Gráficos -->
+<div class="dash-grid" style="margin-top: 20px;">
+    <div class="dash-panel">
+        <div class="dash-panel-header"><h2><i class="fas fa-chart-pie"></i> Equipos por Departamento</h2></div>
+        <div class="dash-panel-body" style="padding: 20px; height: 300px;">
+            <canvas id="chartDept"></canvas>
+        </div>
+    </div>
+    <div class="dash-panel">
+        <div class="dash-panel-header"><h2><i class="fas fa-chart-bar"></i> Tickets por Prioridad</h2></div>
+        <div class="dash-panel-body" style="padding: 20px; height: 300px;">
+            <canvas id="chartTickets"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- CDN de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Colores cyberpunk de tu suite
+    const colors = ['#00f5d4', '#f15bb5', '#00bbf9', '#fee440', '#ff3860', '#00f5a0'];
+    
+    fetch('{% url "api_stats_dashboard" %}')
+    .then(r => r.json())
+    .then(data => {
+        // 1. Gráfico de Dona - Equipos por Departamento
+        new Chart(document.getElementById('chartDept'), {
+            type: 'doughnut',
+            data: {
+                labels: data.equipos_dept.map(d => d.departamento__nombre || 'Sin Depto'),
+                datasets: [{ data: data.equipos_dept.map(d => d.total), backgroundColor: colors, borderWidth: 0 }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8' } } } }
+        });
+
+        // 2. Gráfico de Barras - Tickets por Prioridad
+        new Chart(document.getElementById('chartTickets'), {
+            type: 'bar',
+            data: {
+                labels: data.tickets_pri.map(d => d.prioridad.toUpperCase()),
+                datasets: [{ label: 'Tickets', data: data.tickets_pri.map(d => d.total), backgroundColor: '#00bbf9' }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { color: '#94a3b8' } }, x: { ticks: { color: '#94a3b8' } } } }
+        });
+    });
+});
+</script>
+
+{% endblock %}

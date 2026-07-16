@@ -1,0 +1,293 @@
+<!--
+  Página de edición de equipo y sus componentes.
+  Muestra: datos del equipo (editable), lista de componentes,
+  formulario para agregar componentes, e historial de cambios.
+  Cuando se edita un componente, se detectan cambios y se notifica.
+-->
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block active_inv %}active{% endblock %}
+{% block titulo %}Editar {{ equipo.identificacion }} - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="form-page">
+    <div class="page-header">
+        <h1><i class="fas fa-pen-to-square"></i> Equipo: {{ equipo.identificacion }}</h1>
+        <p>{{ equipo.tipo_equipo }} — {{ equipo.ubicacion }} 
+           {% if equipo.departamento %}— {{ equipo.departamento.nombre }}{% endif %}</p>
+        <a href="{% url 'admin_inventario' %}" class="btn-outline">
+            <i class="fas fa-arrow-left"></i> Volver al Inventario
+        </a>
+    </div>
+
+    <!-- ═══ Sección 1: Datos del equipo ═══ -->
+    <div class="form-card">
+        <h2 class="form-card-title"><i class="fas fa-desktop"></i> Datos del Equipo</h2>
+        <form method="post" action="{% url 'editar_equipo' equipo.id %}">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Identificación</label>
+                    {{ form.identificacion }}
+                </div>
+                <div class="form-group">
+                    <label>Tipo</label>
+                    {{ form.tipo_equipo }}
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    {{ form.marca }}
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    {{ form.modelo }}
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    {{ form.estado }}
+                </div>
+                <div class="form-group">
+                    <label>Departamento</label>
+                    {{ form.departamento }}
+                </div>
+                <div class="form-group">
+                    <label>IP</label>
+                    {{ form.ip }}
+                </div>
+                <div class="form-group">
+                    <label>MAC</label>
+                    {{ form.mac }}
+                </div>
+                <div class="form-group">
+                    <label>Sistema Operativo</label>
+                    {{ form.sistema_operativo }}
+                </div>
+                <div class="form-group">
+                    <label>No. Inventario</label>
+                    {{ form.numero_inventario }}
+                </div>
+                <div class="form-group">
+                    <label>Responsable</label>
+                    {{ form.responsable }}
+                </div>
+                <div class="form-group">
+                    <label>Ubicación</label>
+                    {{ form.ubicacion }}
+                </div>
+                <div class="form-group full-width">
+                    <label>Observaciones</label>
+                    {{ form.observaciones }}
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- ═══ Sección 2: Componentes del equipo ═══ -->
+    <div class="form-card">
+        <h2 class="form-card-title">
+            <i class="fas fa-microchip"></i> Componentes 
+            <span class="badge badge-blue">{{ componentes|length }} registrados</span>
+        </h2>
+
+        <!-- Formulario para agregar componente nuevo -->
+        <div class="comp-add-form" id="compAddForm">
+            <h3>Agregar Componente</h3>
+            <form onsubmit="agregarComponente(event, {{ equipo.id }})">
+                {% csrf_token %}
+                <div class="form-grid form-grid-compact">
+                    <div class="form-group">
+                        <label>Tipo *</label>
+                        {{ form_componente.tipo }}
+                    </div>
+                    <div class="form-group">
+                        <label>Marca</label>
+                        {{ form_componente.marca }}
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo</label>
+                        {{ form_componente.modelo }}
+                    </div>
+                    <div class="form-group">
+                        <label>Capacidad</label>
+                        {{ form_componente.capacidad }}
+                    </div>
+                    <div class="form-group">
+                        <label>N. Serie</label>
+                        {{ form_componente.numero_serie }}
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        {{ form_componente.estado }}
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Especificaciones</label>
+                        {{ form_componente.especificaciones }}
+                    </div>
+                </div>
+                <button type="submit" class="btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Agregar
+                </button>
+            </form>
+        </div>
+
+        <!-- Lista de componentes existentes -->
+        {% if componentes %}
+        <div class="comp-list">
+            {% for comp in componentes %}
+            <div class="comp-item" id="comp-{{ comp.id }}">
+                <div class="comp-info">
+                    <span class="comp-type-badge">{{ comp.get_tipo_display }}</span>
+                    <span class="comp-detail"><strong>Marca:</strong> {{ comp.marca|default:"—" }}</span>
+                    <span class="comp-detail"><strong>Modelo:</strong> {{ comp.modelo|default:"—" }}</span>
+                    <span class="comp-detail"><strong>Capacidad:</strong> {{ comp.capacidad|default:"—" }}</span>
+                    <span class="comp-detail"><strong>N.Serie:</strong> {{ comp.numero_serie|default:"—" }}</span>
+                    {% if comp.especificaciones %}
+                    <span class="comp-detail comp-specs">{{ comp.especificaciones }}</span>
+                    {% endif %}
+                    <span class="comp-state badge 
+                        {% if comp.estado == 'activo' %}badge-green
+                        {% else %}badge-yellow
+                        {% endif %}">{{ comp.get_estado_display }}</span>
+                </div>
+                <div class="comp-actions">
+                    <button onclick="editarComponente({{ comp.id }})" class="btn-sm btn-primary" title="Editar">
+                        <i class="fas fa-pen"></i>
+                    </button>
+                    <button onclick="eliminarComponente({{ comp.id }}, '{{ comp.get_tipo_display }}')" 
+                            class="btn-sm btn-danger" title="Eliminar">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No hay componentes registrados para este equipo.</p>
+        {% endif %}
+    </div>
+
+    <!-- ═══ Sección 3: Historial de cambios ═══ -->
+    <div class="form-card">
+        <h2 class="form-card-title">
+            <i class="fas fa-clock-rotate-left"></i> Historial de Cambios
+        </h2>
+        {% if historial %}
+        <div class="history-list">
+            {% for h in historial %}
+            <div class="history-item {% if h.accion == 'modificado' %}history-modified
+                {% elif h.accion == 'eliminado' %}history-deleted
+                {% else %}history-created{% endif %}">
+                <div class="history-icon">
+                    <i class="fas 
+                        {% if h.accion == 'creado' %}fa-plus-circle text-green
+                        {% elif h.accion == 'modificado' %}fa-pen-circle text-yellow
+                        {% elif h.accion == 'eliminado' %}fa-minus-circle text-red
+                        {% else %}fa-exclamation-circle text-orange
+                        {% endif %}
+                    "></i>
+                </div>
+                <div class="history-info">
+                    <span class="history-action">{{ h.get_accion_display }}</span>
+                    {% if h.componente %}
+                    <span class="history-comp">{{ h.componente.get_tipo_display }} — {{ h.componente.marca }}</span>
+                    {% endif %}
+                    <span class="history-user">Por: {{ h.registrado_por.perfil.nombre_completo|default:"—" }}</span>
+                    <span class="history-date">{{ h.fecha|date:"d/m/Y H:i" }}</span>
+                    {% if h.valor_anterior %}
+                    <details class="history-details">
+                        <summary>Ver cambios</summary>
+                        <div class="history-diff">
+                            <p><strong>Antes:</strong> {{ h.valor_anterior }}</p>
+                            <p><strong>Después:</strong> {{ h.valor_nuevo }}</p>
+                        </div>
+                    </details>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="empty-text">No hay cambios registrados para este equipo.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal para editar componente -->
+<div class="modal hidden" id="modalEditComp">
+    <div class="modal-overlay" onclick="cerrarModalComp()"></div>
+    <div class="modal-content modal-lg">
+        <h3><i class="fas fa-pen"></i> Editar Componente</h3>
+        <form onsubmit="guardarEdicionComponente(event)">
+            {% csrf_token %}
+            <input type="hidden" id="editCompId">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <select id="editTipo" class="input-field">
+                        <option value="cpu">Procesador (CPU)</option>
+                        <option value="ram">Memoria RAM</option>
+                        <option value="disco">Disco Duro / SSD</option>
+                        <option value="gpu">Tarjeta Gráfica</option>
+                        <option value="motherboard">Placa Base</option>
+                        <option value="fuente">Fuente de Poder</option>
+                        <option value="tarjeta_red">Tarjeta de Red</option>
+                        <option value="optico">Unidad Óptica</option>
+                        <option value="case">Gabinete</option>
+                        <option value="monitor">Monitor</option>
+                        <option value="teclado">Teclado</option>
+                        <option value="mouse">Mouse</option>
+                        <option value="impresora">Impresora</option>
+                        <option value="ups">UPS / Regulador</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Marca</label>
+                    <input type="text" id="editMarca" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label>Modelo</label>
+                    <input type="text" id="editModelo" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label>Capacidad</label>
+                    <input type="text" id="editCapacidad" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label>N. Serie</label>
+                    <input type="text" id="editNS" class="input-field">
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="editEstado" class="input-field">
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                        <option value="mantenimiento">En mantenimiento</option>
+                        <option value="dado_baja">Dado de baja</option>
+                    </select>
+                </div>
+                <div class="form-group full-width">
+                    <label>Especificaciones</label>
+                    <textarea id="editSpecs" class="input-field" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="cerrarModalComp()" class="btn-outline">Cancelar</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts_extras %}
+<script src="{% static 'js/inventario.js' %}"></script>
+{% endblock %}

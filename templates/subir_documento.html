@@ -1,0 +1,86 @@
+<!--
+  Formulario para subir un documento al sistema FTP interno.
+  Permite configurar si es visible para todos o solo para
+  departamentos específicos (puede ser varios).
+-->
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block active_docs %}active{% endblock %}
+{% block titulo %}Subir Documento - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="form-page">
+    <div class="page-header">
+        <h1><i class="fas fa-upload"></i> Subir Documento</h1>
+        <p>Comparta un archivo con los miembros de la organización. 
+           Puede restringir el acceso por departamento.</p>
+    </div>
+
+    <div class="form-card">
+        <form method="post" enctype="multipart/form-data" id="docForm">
+            {% csrf_token %}
+
+            <!-- Archivo -->
+            <div class="form-group">
+                <label for="id_archivo"><i class="fas fa-file-arrow-up"></i> Archivo</label>
+                {{ form.archivo }}
+                <span class="form-hint">Máximo 50 MB. Formatos: PDF, DOC, XLS, PPT, ZIP, TXT, imágenes.</span>
+                {% if form.archivo.errors %}
+                    <span class="field-error">{{ form.archivo.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Descripción -->
+            <div class="form-group">
+                <label for="id_descripcion"><i class="fas fa-align-left"></i> Descripción</label>
+                {{ form.descripcion }}
+                {% if form.descripcion.errors %}
+                    <span class="field-error">{{ form.descripcion.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Visibilidad: toggle todos/departamentos -->
+            <div class="form-group">
+                <label class="checkbox-label">
+                    {{ form.visible_todos }}
+                    <span>Visible para todos los usuarios</span>
+                </label>
+            </div>
+
+            <!-- Selección de departamentos (se muestra/oculta según el toggle) -->
+            <div class="form-group" id="deptSelectGroup" style="display: none;">
+                <label><i class="fas fa-building"></i> Departamentos con acceso</label>
+                {{ form.departamentos_visibles }}
+                <span class="form-hint">Seleccione uno o varios departamentos que podrán descargar el documento.</span>
+                {% if form.departamentos_visibles.errors %}
+                    <span class="field-error">{{ form.departamentos_visibles.errors.0 }}</span>
+                {% endif %}
+            </div>
+
+            <!-- Botones -->
+            <div class="form-actions">
+                <a href="{% url 'documentos' %}" class="btn-outline">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-upload"></i> Subir Documento
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Mostrar/ocultar selección de departamentos según el checkbox
+    const check = document.getElementById('visible_todos_check');
+    const deptGroup = document.getElementById('deptSelectGroup');
+    if (check) {
+        check.addEventListener('change', function() {
+            deptGroup.style.display = this.checked ? 'none' : 'block';
+        });
+        // Estado inicial
+        deptGroup.style.display = check.checked ? 'none' : 'block';
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block titulo %}Evaluación: {{ curso.titulo }}{% endblock %}
+{% block contenido %}
+<div class="page-header">
+    <h1><i class="fas fa-file-pen"></i> {{ curso.titulo }}</h1>
+    <a href="{% url 'cursos' %}" class="btn-outline btn-sm"><i class="fas fa-arrow-left"></i> Volver a Cursos</a>
+</div>
+
+{% if ya_aprobado %}
+<div class="message message-success"><i class="fas fa-check-circle"></i><span>Ya has aprobado este curso anteriormente. Puedes volver a intentarlo si deseas mejorar tu nota.</span></div>
+{% endif %}
+
+<form id="evaluacionForm">
+    {% for p in preguntas %}
+    <div class="form-card" style="margin-bottom: 16px;">
+        <h4 style="margin-bottom: 12px; color: var(--text-primary);">
+            <span class="accent" style="margin-right: 8px;">{{ p.indice|add:1 }}.</span> {{ p.p }}
+        </h4>
+        <div class="checkbox-group" style="flex-direction: column;">
+            {% for opcion in p.o %}
+            <label style="width: 100%; text-align: left;">
+                <!-- Aquí está la clave: name="preg_{{ p.indice }}" garantiza nombres únicos -->
+                <input type="radio" name="preg_{{ p.indice }}" value="{{ forloop.counter0 }}" required>
+                {{ opcion }}
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    
+    <div style="text-align: center; margin-top: 24px;">
+        <button type="submit" class="btn-primary btn-lg"><i class="fas fa-paper-plane"></i> Enviar Evaluación</button>
+    </div>
+</form>
+
+<!-- Modal de Resultado -->
+<div class="modal" id="resultadoModal" style="display: none;">
+    <div class="modal-overlay" onclick="cerrarModal()"></div>
+    <div class="modal-content" style="text-align: center;">
+        <div id="modalIcon" style="font-size: 4rem; margin-bottom: 16px;"></div>
+        <h3 id="modalTitulo" style="font-size: 1.5rem; margin-bottom: 8px;"></h3>
+        <p id="modalTexto" style="font-size: 1.1rem; margin-bottom: 24px;"></p>
+        <a href="{% url 'cursos' %}" class="btn-primary">Volver a Cursos</a>
+    </div>
+</div>
+
+<script>
+document.getElementById('evaluacionForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    // Recoger respuestas
+    let respuestas = {};
+    document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+        respuestas[radio.name.split('_')[1]] = radio.value;
+    });
+
+    if (Object.keys(respuestas).length < {{ total_preguntas }}) {
+        showNotification('Debe responder todas las preguntas', 'error');
+        return;
+    }
+
+    // Enviar al servidor
+    fetch('{% url "api_evaluar_curso" curso.id %}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() },
+        body: JSON.stringify({ respuestas: respuestas })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            const modal = document.getElementById('resultadoModal');
+            modal.style.display = 'flex';
+            
+            if (data.aprobado) {
+                document.getElementById('modalIcon').innerHTML = '<i class="fas fa-trophy" style="color: var(--accent-yellow);"></i>';
+                document.getElementById('modalTitulo').textContent = '¡Felicidades, curso aprobado!';
+                document.getElementById('modalTitulo').style.color = 'var(--accent-green)';
+            } else {
+                document.getElementById('modalIcon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--accent-red);"></i>';
+                document.getElementById('modalTitulo').textContent = 'No aprobado (Se requiere 70%)';
+                document.getElementById('modalTitulo').style.color = 'var(--accent-red)';
+            }
+            document.getElementById('modalTexto').innerHTML = `Obtuviste <strong style="color:var(--accent-cyan); font-size:1.5rem;">${data.calificacion}%</strong> (${data.correctas}/{data.total} correctas)`;
+        }
+    });
+});
+
+function cerrarModal() {
+    document.getElementById('resultadoModal').style.display = 'none';
+}
+</script>
+{% endblock %}

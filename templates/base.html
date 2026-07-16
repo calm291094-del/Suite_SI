@@ -1,0 +1,360 @@
+<!--
+  Plantilla base del sistema.
+  TODAS las demás plantillas heredan de esta.
+-->
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <title>{% block titulo %}Suite de Seguridad Informática{% endblock %}</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/all.min.css' %}" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/main.css' %}">
+
+    <!-- =============================================================================
+       ESTILOS CSS INTEGRADOS (Submenús, Modo Oscuro y Chat Flotante)
+       ============================================================================= -->
+    <style>
+        /* ============================================
+           NOTIFICACIÓN
+           ============================================ */
+        .notificacion {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #2c3e50;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-family: Arial, sans-serif;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+
+    {% block estilos_extras %}{% endblock %}
+</head>
+<body>
+
+    <!-- Efectos visuales CRT/Grain -->
+    <div class="crt-scanlines"></div>
+    <div class="film-grain"></div>
+
+    <!-- Overlay oscuro al abrir sidebar -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Barra de navegación superior -->
+    <nav class="navbar">
+        <div class="navbar-left">
+            <a href="#" class="navbar-brand" id="sidebarToggleBtn" onclick="toggleSidebar(event)">
+                <i class="fas fa-shield-halved"></i>
+                <span class="brand-text">SuiteSeg<span class="accent">.cu</span></span>
+            </a>
+        </div>
+
+        <div class="navbar-right">
+            {% if user.is_authenticated %}
+                <!-- Notificaciones -->
+                <div class="notif-wrapper">
+                    <button class="notif-btn" onclick="toggleNotifPanel()" aria-label="Notificaciones">
+                        <i class="fas fa-bell"></i>
+                        {% if notifs_count > 0 %}
+                            <span class="notif-badge" id="notifBadge">{{ notifs_count }}</span>
+                        {% else %}
+                            <span class="notif-badge hidden" id="notifBadge">0</span>
+                        {% endif %}
+                    </button>
+                    <div class="notif-panel hidden" id="notifPanel">
+                        <div class="notif-header">
+                            <h3>Notificaciones</h3>
+                            <button onclick="marcarTodasLeidas()" title="Marcar todas como leídas">
+                                <i class="fas fa-check-double"></i>
+                            </button>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <p class="notif-empty">Cargando...</p>
+                        </div>
+                        <a href="{% url 'notificaciones' %}" class="notif-footer">
+                            Ver todas las notificaciones
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Info del usuario -->
+                <div class="user-menu">
+                    <span class="user-name">{{ user.perfil.nombre_completo|truncatewords:2 }}</span>
+                    <span class="user-role badge-role badge-{{ user.perfil.rol }}">
+                        {% if user.perfil.rol == 'root' %}ROOT
+                        {% elif user.perfil.rol == 'admin_red' %}Admin Red
+                        {% elif user.perfil.rol == 'seguridad' %}Seguridad
+                        {% else %}Usuario
+                        {% endif %}
+                    </span>
+                </div>
+            {% else %}
+                <a href="{% url 'login' %}" class="btn-nav">
+                    <i class="fas fa-right-to-bracket"></i> Iniciar Sesión
+                </a>
+                <a href="{% url 'registro' %}" class="btn-nav btn-nav-accent">
+                    <i class="fas fa-user-plus"></i> Registrarse
+                </a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Layout principal -->
+    <div class="main-layout">
+        
+        {% if user.is_authenticated %}
+        <!-- Sidebar deslizable -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-content" id="sidebarContent">
+                <button class="sidebar-close" onclick="closeSidebar()" title="Cerrar menú">
+                    <i class="fas fa-times"></i>
+                </button>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Principal</span>
+                    <a href="{% url 'dashboard' %}" class="sidebar-link {% block active_dash %}{% endblock %}">
+                        <i class="fas fa-gauge-high"></i> Dashboard
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Herramientas</span>
+                    <a href="{% url 'documentos' %}" class="sidebar-link {% block active_docs %}{% endblock %}">
+                        <i class="fas fa-folder-open"></i> Documentos (FTP)
+                    </a>
+                    <a href="{% url 'chat' %}" class="sidebar-link {% block active_chat %}{% endblock %}">
+                        <i class="fas fa-comments"></i> Chat Interno
+                    </a>
+                    <a href="{% url 'setup_2fa' %}" class="sidebar-link">
+                        <i class="fas fa-shield-halved"></i> Autenticación 2FA
+                    </a>
+                    <a href="{% url 'cambiar_password' %}" class="sidebar-link">
+                        <i class="fas fa-key"></i> Cambiar Contraseña
+                    </a>
+                </div>
+
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Información</span>
+                    <a href="{% url 'base_legal' %}" class="sidebar-link {% block active_legal %}{% endblock %}">
+                        <i class="fas fa-scale-balanced"></i> Base Legal
+                    </a>
+                    <a href="{% url 'efemerides' %}" class="sidebar-link {% block active_efem %}{% endblock %}">
+                        <i class="fas fa-calendar-days"></i> Efemérides
+                    </a>
+                    <a href="{% url 'enlaces' %}" class="sidebar-link {% block active_links %}{% endblock %}">
+                        <i class="fas fa-link"></i> Enlaces Web
+                    </a>
+                    <!-- Debajo de Enlaces Web -->
+                    <a href="{% url 'cursos' %}" class="sidebar-link">
+                        <i class="fas fa-graduation-cap"></i> Capacitación
+                    </a>
+                    <!-- Debajo del menú de Administración (solo admins) -->
+                    {% if user.perfil.es_admin %}
+                    <a href="{% url 'politicas' %}" class="sidebar-link">
+                        <i class="fas fa-file-shield"></i> Políticas Seguridad
+                    </a>
+                    {% endif %}
+                </div>
+
+                {% if user.perfil.es_admin %}
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Administración</span>
+                    <a href="{% url 'admin_usuarios' %}" class="sidebar-link {% block active_ausers %}{% endblock %}">
+                        <i class="fas fa-users-gear"></i> Gestión de Usuarios
+                    </a>
+                    <a href="{% url 'admin_inventario' %}" class="sidebar-link {% block active_inv %}{% endblock %}">
+                        <i class="fas fa-server"></i> Inventario de Equipos
+                    </a>
+                    <a href="{% url 'mapa_red' %}" class="sidebar-link">
+                        <i class="fas fa-network-wired"></i> Mapa de Red
+                    </a>
+                    <a href="{% url 'admin_cursos' %}" class="sidebar-link">
+                        <i class="fas fa-graduation-cap"></i> Gestionar Cursos
+                    </a>
+                    <a href="{% url 'admin_politicas' %}" class="sidebar-link">
+                        <i class="fas fa-file-shield"></i> Políticas Seguridad
+                    </a>
+                    <a href="{% url 'admin_departamentos' %}" class="sidebar-link">
+                        <i class="fas fa-building"></i> Departamentos
+                    </a>
+                    <a href="{% url 'manual' %}" class="sidebar-link" target="_blank">
+                        <i class="fas fa-book"></i> Manual de Admin
+                    </a>
+                </div>
+                <div class="sidebar-section">
+                    <span class="sidebar-label">Seguridad</span>
+                    <a href="{% url 'sesiones' %}" class="sidebar-link">
+                        <i class="fas fa-clock-rotate-left"></i> Historial Sesiones
+                    </a>
+                    <a href="{% url 'auditoria' %}" class="sidebar-link">
+                        <i class="fas fa-clipboard-list"></i> Registro Auditoría
+                    </a>
+                    <a href="{% url 'incidentes' %}" class="sidebar-link">
+                        <i class="fas fa-shield-virus"></i> Incidentes
+                    </a>
+                    <a href="{% url 'ia_analisis' %}" class="sidebar-link">
+                        <i class="fas fa-brain"></i> Centro de IA
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="{% url 'logout' %}" class="sidebar-logout-btn" title="Cerrar sesión">
+                    <i class="fas fa-right-from-bracket"></i>
+                    <span>Cerrar Sesión</span>
+                </a>
+                <div class="sidebar-version">
+                    <span>v1.0</span>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Contenido principal -->
+        <main class="main-content {% if not user.is_authenticated %}full-width{% endif %}">
+            
+            {% if password_dias_restantes is not None and password_dias_restantes <= 7 and password_dias_restantes > 0 %}
+            <div class="message message-warning" style="margin-bottom:16px;">
+                <i class="fas fa-clock"></i>
+                <span>Su contraseña expira en <strong>{{ password_dias_restantes }} día{{ password_dias_restantes|pluralize }}</strong>. 
+                <a href="{% url 'cambiar_password' %}" style="color:var(--accent-cyan);font-weight:600;">Cambiar ahora</a></span>
+            </div>
+            {% endif %}
+
+            {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="message message-{{ message.tags }}" role="alert">
+                        <i class="fas 
+                            {% if message.tags == 'success' %}fa-circle-check
+                            {% elif message.tags == 'error' %}fa-circle-xmark
+                            {% elif message.tags == 'warning' %}fa-triangle-exclamation
+                            {% else %}fa-circle-info
+                            {% endif %}
+                        "></i>
+                        <span>{{ message }}</span>
+                        <button onclick="this.parentElement.remove()" class="message-close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% block contenido %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Botón volver arriba -->
+    <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Volver arriba">
+        <i class="fas fa-chevron-up"></i>
+    </button>
+
+    <!-- CSRF Token -->
+    <script>
+        function getCSRF() {
+            return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value 
+                   || '{{ csrf_token }}';
+        }
+    </script>
+    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+
+    <script src="{% static 'js/main.js' %}"></script>
+
+    {% block scripts_extras %}{% endblock %}
+
+    
+<!-- ==========================================
+     JAVASCRIPT DE PROTECCION CONTRA VISTA DE CODIGO FUENTE
+     ========================================== -->
+<script>
+    // --- Función para mostrar notificaciones ---
+    function mostrarNotificacion(mensaje) {
+        const existente = document.querySelector('.notificacion');
+        if (existente) existente.remove();
+        
+        const notif = document.createElement('div');
+        notif.className = 'notificacion';
+        notif.textContent = mensaje;
+        
+        document.body.appendChild(notif);
+        
+        setTimeout(() => {
+            notif.style.opacity = '0';
+            notif.style.transform = 'translateY(10px)';
+            notif.style.transition = 'all 0.3s ease';
+            setTimeout(() => notif.remove(), 300);
+        }, 3000);
+    }
+
+    // --- Capa 1: Deshabilitar clic derecho ---
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+        mostrarNotificacion('⚠️ Acción no permitida');
+        return false;
+    });
+
+    // --- Capa 2: Bloquear atajos de teclado comunes ---
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'u') {
+            e.preventDefault();
+            mostrarNotificacion('⚠️ Acción no permitida');
+            return false;
+        }
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            mostrarNotificacion('⚠️ Datos guardados');
+            return false;
+        }
+        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'U')) {
+            e.preventDefault();
+            return false;
+        }
+        if (e.key === 'F12') {
+            e.preventDefault();
+            return false;
+        }
+    });
+
+    // --- Capa 3: Deshabilitar selección de texto ---
+    document.addEventListener('selectstart', function(e) {
+        e.preventDefault();
+    });
+
+    // --- Capa 4: Deshabilitar arrastrar ---
+    document.addEventListener('dragstart', function(e) {
+        e.preventDefault();
+    });
+
+    // --- Capa 5: Ocultar consola (opcional) ---
+    Object.defineProperty(window, 'console', {
+        value: {
+            log: function() {},
+            dir: function() {},
+            table: function() {},
+            warn: function() {},
+            error: function() {}
+        },
+        writable: false,
+        configurable: false
+    });
+</script>
+</body>
+</html>

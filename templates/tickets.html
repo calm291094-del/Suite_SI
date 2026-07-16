@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block titulo %}Tickets de Soporte{% endblock %}
+{% block contenido %}
+<div class="page-header">
+    <h1><i class="fas fa-ticket"></i> Tickets de Soporte</h1>
+    <div class="header-actions">
+        <a href="{% url 'crear_ticket' %}" class="btn-primary"><i class="fas fa-plus"></i> Nuevo Ticket</a>
+    </div>
+</div>
+<div class="table-container">
+    <table class="data-table">
+        <thead><tr><th>ID</th><th>Título</th><th>Creador</th><th>Prioridad</th><th>Estado</th><th>Fecha</th></tr></thead>
+        <tbody>
+            {% for t in tickets %}
+            <tr class="table-row-hover">
+                <td><span class="comp-count">TK-{{ t.id }}</span></td>
+                <td><a href="{% url 'detalle_ticket' t.id %}" style="color:var(--accent-cyan)">{{ t.titulo }}</a></td>
+                <td>{{ t.creador.perfil.nombre_completo }}</td>
+                <td><span class="badge badge-{{ t.prioridad }}">{{ t.prioridad|upper }}</span></td>
+                <td>{{ t.get_estado_display }}</td>
+                <td style="font-size:0.8rem;">{{ t.fecha_creacion|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="empty-text">No hay tickets.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

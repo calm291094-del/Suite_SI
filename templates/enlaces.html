@@ -1,0 +1,45 @@
+<!--
+  Página de enlaces a sitios web cubanos.
+  Organizados por categoría: noticias nacionales, provinciales,
+  buscadores, instituciones, cultura y deporte.
+  No requiere autenticación.
+-->
+{% extends 'base.html' %}
+
+{% block active_links %}active{% endblock %}
+{% block titulo %}Enlaces Web Cubanos - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="enlaces-page">
+    <div class="page-header">
+        <h1><i class="fas fa-link"></i> Directorio de Sitios Web Cubanos</h1>
+        <p>Enlaces a portales de noticias, buscadores, instituciones gubernamentales 
+           y sitios de interés nacional. Todos los enlaces abren en nueva pestaña.</p>
+    </div>
+
+    <!-- Grid de categorías de enlaces -->
+    <div class="enlaces-grid">
+        {% for categoria in categorias %}
+        <div class="enlace-category">
+            <!-- Encabezado de la categoría -->
+            <div class="enlace-cat-header">
+                <h2>{{ categoria.nombre }}</h2>
+                <span class="enlace-count">{{ categoria.sitios|length }} sitios</span>
+            </div>
+            <!-- Lista de sitios -->
+            <div class="enlace-list">
+                {% for sitio in categoria.sitios %}
+                <a href="{{ sitio.url }}" target="_blank" rel="noopener noreferrer" class="enlace-item">
+                    <div class="enlace-info">
+                        <span class="enlace-nombre">{{ sitio.nombre }}</span>
+                        <span class="enlace-desc">{{ sitio.desc }}</span>
+                    </div>
+                    <i class="fas fa-external-link-alt enlace-icon"></i>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block titulo %}Registro de Auditoría Completo - SuiteSeg.cu{% endblock %}
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-clipboard-list"></i> Registro de Auditoría Completo</h1>
+        <p style="color:var(--text-muted);font-size:0.85rem;">
+            <i class="fas fa-lock"></i> Registros INMUTABLES — Trazabilidad total del sistema
+        </p>
+    </div>
+
+    <!-- Leyenda de Módulos -->
+    <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; padding: 15px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 10px;">
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-user-shield" style="color: var(--accent-cyan);"></i> Autenticación</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-users-gear" style="color: var(--accent-magenta);"></i> Usuarios</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-server" style="color: var(--accent-blue);"></i> Inventario</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-folder-open" style="color: var(--accent-green);"></i> Documentos</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-ticket" style="color: var(--accent-yellow);"></i> Soporte</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-file-shield" style="color: var(--accent-orange);"></i> Políticas</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-graduation-cap" style="color: #a78bfa;"></i> Capacitación</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-building" style="color: #f472b6;"></i> Departamentos</div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary);"><i class="fas fa-shield-virus" style="color: var(--accent-red);"></i> Incidentes</div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <form method="get" class="filters-form">
+            <div class="filter-group">
+                <label>Acción</label>
+                <select name="accion" class="input-field input-sm">
+                    <option value="">Todas</option>
+                    {% for val, label in acciones %}
+                    <option value="{{ val }}" {% if filtro_accion == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Usuario</label>
+                <input type="text" name="usuario" class="input-field input-sm" placeholder="Buscar usuario..." value="{{ filtro_usuario }}">
+            </div>
+            <div class="filter-group">
+                <label>Fecha</label>
+                <input type="date" name="fecha" class="input-field input-sm" value="{{ filtro_fecha }}">
+            </div>
+            <div class="filter-actions">
+                <button type="submit" class="btn-sm btn-primary"><i class="fas fa-search"></i></button>
+                <a href="{% url 'auditoria' %}" class="btn-sm btn-outline"><i class="fas fa-times"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Fecha/Hora</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                    <th>IP</th>
+                    <th>Objetivo Afectado</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registros %}
+                <tr class="table-row-hover">
+                    <td style="font-family:var(--font-mono);font-size:0.78rem;white-space:nowrap;">{{ r.fecha|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ r.usuario.username|default:"Sistema" }}</td>
+                    <td>
+                        <span class="badge 
+                            {% if 'fallido' in r.accion or 'bloqueada' in r.accion or 'expirada' in r.accion or 'eliminar' in r.accion %}badge-red
+                            {% elif 'login' in r.accion or '2fa' in r.accion or 'registro' in r.accion or 'crear' in r.accion %}badge-green
+                            {% elif 'editar' in r.accion or 'actualizacion' in r.accion or 'cambio' in r.accion %}badge-blue
+                            {% elif 'politic' in r.accion %}badge-orange
+                            {% elif 'incidente' in r.accion %}badge-red
+                            {% elif 'curso' in r.accion or 'aprobacion' in r.accion %}badge-blue
+                            else %}badge-green
+                            {% endif %}">{{ r.get_accion_display }}</span>
+                    </td>
+                    <td><code style="font-size:0.78rem;">{{ r.direccion_ip|default:"—" }}</code></td>
+                    <td style="font-size:0.8rem;">
+                        {% if r.objeto_tipo %}
+                            <span style="color:var(--text-muted);font-size:0.7rem;">[{{ r.objeto_tipo }}]</span>
+                            {% if r.objeto_id %} #{{ r.objeto_id }}{% endif %}
+                        {% else %}
+                            <span style="color:var(--text-muted);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="font-size:0.82rem;max-width:300px;">{{ r.descripcion }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="empty-text">No hay registros de auditoría para los filtros seleccionados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

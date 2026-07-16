@@ -1,0 +1,121 @@
+<!--
+  Lista de documentos disponibles para el usuario.
+  Solo muestra los que el usuario tiene permiso para ver,
+  según la configuración de visibilidad por departamento.
+-->
+{% extends 'base.html' %}
+
+{% block active_docs %}active{% endblock %}
+{% block titulo %}Documentos - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="docs-page">
+    <div class="page-header">
+        <h1><i class="fas fa-folder-open"></i> Documentos Compartidos</h1>
+        <p>Documentos disponibles para su departamento. Use el botón de subir para compartir archivos nuevos.</p>
+        <a href="{% url 'subir_documento' %}" class="btn-primary">
+            <i class="fas fa-upload"></i> Subir Documento
+        </a>
+    </div>
+
+    <!-- Tabla de documentos -->
+    {% if documentos %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Archivo</th>
+                    <th>Descripción</th>
+                    <th>Visibilidad</th>
+                    <th>Subido por</th>
+                    <th>Fecha</th>
+                    <th>Descargas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for doc in documentos %}
+                <tr class="table-row-hover">
+                    <td>
+                        <div class="file-name">
+                            <i class="fas 
+                                {% if '.pdf' in doc.nombre_original|lower %}fa-file-pdf text-red
+                                {% elif '.doc' in doc.nombre_original|lower %}fa-file-word text-blue
+                                {% elif '.xls' in doc.nombre_original|lower %}fa-file-excel text-green
+                                {% elif '.zip' in doc.nombre_original|lower %}fa-file-zipper text-yellow
+                                {% elif '.ppt' in doc.nombre_original|lower %}fa-file-powerpoint text-orange
+                                {% else %}fa-file text-gray
+                                {% endif %}
+                            "></i>
+                            <span>{{ doc.nombre_original|truncatechars:35 }}</span>
+                        </div>
+                        <span class="file-size">{{ doc.tamano|filesizeformat }}</span>
+                    </td>
+                    <td>{{ doc.descripcion|truncatewords:10|default:"—" }}</td>
+                    <td>
+                        {% if doc.visible_todos %}
+                            <span class="badge badge-green">Todos</span>
+                        {% else %}
+                            <span class="badge badge-orange">Restringido</span>
+                            <div class="dept-tags">
+                                {% for dept in doc.departamentos_visibles.all %}
+                                    <span class="dept-tag">{{ dept.codigo }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>{{ doc.subido_by.perfil.nombre_completo|default:"—" }}</td>
+                    <td>{{ doc.fecha_subida|date:"d/m/Y" }}</td>
+                    <td>{{ doc.descargas }}</td>
+                    <td>
+                        <a href="{% url 'descargar_documento' doc.id %}" class="btn-sm btn-download" title="Descargar">
+                            <i class="fas fa-download"></i>
+                        </a>
+                        {% if doc.subido_por.id == user.id or user.perfil.es_admin %}
+                        <button onclick="confirmarEliminar({{ doc.id }}, '{{ doc.nombre_original|escapejs }}')" 
+                                class="btn-sm btn-danger" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-folder-open"></i>
+        <p>No hay documentos disponibles para su departamento.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de confirmación para eliminar -->
+<div class="modal hidden" id="modalEliminar">
+    <div class="modal-overlay" onclick="cerrarModal()"></div>
+    <div class="modal-content">
+        <h3><i class="fas fa-triangle-exclamation"></i> Confirmar Eliminación</h3>
+        <p>Está seguro de que desea eliminar el documento <strong id="modalDocName"></strong>?</p>
+        <p class="text-muted">Esta acción no se puede deshacer.</p>
+        <div class="modal-actions">
+            <button onclick="cerrarModal()" class="btn-outline">Cancelar</button>
+            <a href="#" id="modalDeleteLink" class="btn-danger">
+                <i class="fas fa-trash"></i> Eliminar
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mostrar modal de confirmación antes de eliminar
+    function confirmarEliminar(docId, docName) {
+        document.getElementById('modalDocName').textContent = docName;
+        document.getElementById('modalDeleteLink').href = `/documentos/eliminar/${docId}/`;
+        document.getElementById('modalEliminar').classList.remove('hidden');
+    }
+    function cerrarModal() {
+        document.getElementById('modalEliminar').classList.add('hidden');
+    }
+</script>
+{% endblock %}

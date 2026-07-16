@@ -1,0 +1,145 @@
+<!--
+  Panel de inventario de equipos de cómputo.
+  Solo visible para roles administrativos.
+  Muestra todos los equipos con filtros, y permite generar PDF.
+-->
+{% extends 'base.html' %}
+
+{% block active_inv %}active{% endblock %}
+{% block titulo %}Inventario de Equipos - SuiteSeg.cu{% endblock %}
+
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-server"></i> Inventario de Equipos</h1>
+        <p>Gestión detallada de todos los equipos y componentes conectados en red. 
+           Cualquier cambio en los componentes generará una alerta automática.</p>
+        <div class="header-actions">
+            <a href="{% url 'descargar_pdf_inventario' %}" class="btn-outline" target="_blank">
+                <i class="fas fa-file-pdf"></i> Descargar PDF
+            </a>
+            <a href="{% url 'agregar_equipo' %}" class="btn-primary">
+                <i class="fas fa-plus"></i> Agregar Equipo
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="filters-bar">
+        <form method="get" class="filters-form">
+            <div class="filter-group">
+                <label>Departamento</label>
+                <select name="departamento" class="input-field input-sm">
+                    <option value="">Todos</option>
+                    {% for d in departamentos %}
+                    <option value="{{ d.id }}" {% if filtro_dept == d.id|stringformat:"s" %}selected{% endif %}>
+                        {{ d.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Estado</label>
+                <select name="estado" class="input-field input-sm">
+                    <option value="">Todos</option>
+                    <option value="activo" {% if filtro_estado == 'activo' %}selected{% endif %}>Activo</option>
+                    <option value="inactivo" {% if filtro_estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+                    <option value="mantenimiento" {% if filtro_estado == 'mantenimiento' %}selected{% endif %}>Mantenimiento</option>
+                    <option value="dado_baja" {% if filtro_estado == 'dado_baja' %}selected{% endif %}>Dado de baja</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Búsqueda</label>
+                <input type="text" name="busqueda" class="input-field input-sm" 
+                       placeholder="ID, marca, ubicación..." value="{{ filtro_busqueda }}">
+            </div>
+            <div class="filter-group filter-actions">
+                <button type="submit" class="btn-sm btn-primary"><i class="fas fa-search"></i></button>
+                <a href="{% url 'admin_inventario' %}" class="btn-sm btn-outline"><i class="fas fa-times"></i></a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabla de equipos -->
+    {% if equipos %}
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Tipo</th>
+                    <th>Marca / Modelo</th>
+                    <th>Ubicación</th>
+                    <th>Departamento</th>
+                    <th>IP</th>
+                    <th>Componentes</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for eq in equipos %}
+                <tr class="table-row-hover">
+                    <td><strong>{{ eq.identificacion }}</strong></td>
+                    <td>{{ eq.tipo_equipo }}</td>
+                    <td>{{ eq.marca }} {{ eq.modelo }}</td>
+                    <td>{{ eq.ubicacion|truncatechars:25 }}</td>
+                    <td>{{ eq.departamento|default:"—" }}</td>
+                    <td><code>{{ eq.ip|default:"—" }}</code></td>
+                    <td>
+                        <span class="comp-count">{{ eq.num_componentes }}</span>
+                        <span class="comp-label">piezas</span>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if eq.estado == 'activo' %}badge-green
+                            {% elif eq.estado == 'mantenimiento' %}badge-yellow
+                            {% else %}badge-red
+                            {% endif %}">
+                            {{ eq.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-group">
+                            <a href="{% url 'editar_equipo' eq.id %}" class="btn-sm btn-primary" title="Ver/Editar">
+                                <i class="fas fa-pen-to-square"></i>
+                            </a>
+                            <button onclick="eliminarEquipo({{ eq.id }}, '{{ eq.identificacion }}')" 
+                                    class="btn-sm btn-danger" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-server"></i>
+        <p>No se encontraron equipos con los filtros aplicados.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    // Eliminar equipo con confirmación
+    function eliminarEquipo(eqId, identificacion) {
+        if (!confirm(`¿Eliminar el equipo ${identificacion} y todos sus componentes?`)) return;
+        fetch(`/admin/inventario/eliminar/${eqId}/`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': getCSRF() },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.ok) {
+                showNotification(data.mensaje, 'success');
+                setTimeout(() => location.reload(), 500);
+            } else {
+                showNotification(data.error || 'Error', 'error');
+            }
+        });
+    }
+</script>
+{% endblock %}

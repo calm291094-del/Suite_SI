@@ -1,0 +1,195 @@
+<!--
+  Página principal pública del sistema.
+-->
+{% extends 'base.html' %}
+
+{% block titulo %}Suite de Seguridad Informática - Base Legal Cuba{% endblock %}
+
+{% block contenido %}
+<div class="home-page">
+
+    <!-- ═══ Hero Section ═══ -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                <span class="hero-line">Seguridad Informática</span>
+                <span class="hero-line accent">en Cuba</span>
+            </h1>
+            <p class="hero-desc">
+                Suite integral para la gestión de la seguridad informática institucional.
+                Cumplimiento normativo, inventario de activos, monitoreo de hardware,
+                documentación y comunicación interna — todo en un solo sistema.
+            </p>
+            <div class="hero-actions">
+                <a href="{% url 'login' %}" class="btn-primary btn-lg">
+                    <i class="fas fa-right-to-bracket"></i> Acceder al Sistema
+                </a>
+                <a href="{% url 'base_legal' %}" class="btn-outline btn-lg">
+                    <i class="fas fa-scale-balanced"></i> Consultar Base Legal
+                </a>
+            </div>
+        </div>
+        <div class="hero-glow hero-glow-1"></div>
+        <div class="hero-glow hero-glow-2"></div>
+    </section>
+
+    <!-- ═══ Estadísticas rápidas ═══ -->
+    <section class="stats-row">
+        <div class="stat-card">
+            <i class="fas fa-gavel"></i>
+            <div class="stat-number">6+</div>
+            <div class="stat-label">Normas Vigentes</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-shield-halved"></i>
+            <div class="stat-number">27+</div>
+            <div class="stat-label">Funciones de Seguridad</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-network-wired"></i>
+            <div class="stat-number">12+</div>
+            <div class="stat-label">Funciones de Red</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-server"></i>
+            <div class="stat-number">100%</div>
+            <div class="stat-label">Monitoreo Hardware</div>
+        </div>
+    </section>
+
+    <!-- ═══ Base Legal Resumida ═══ -->
+    <section class="section">
+        <h2 class="section-title">
+            <i class="fas fa-gavel"></i> Base Legal Vigente en Cuba
+        </h2>
+        <p class="section-subtitle">
+            Marco normativo que regula la seguridad informática en las entidades cubanas.
+            Cada entidad está obligada a cumplir estas disposiciones.
+        </p>
+
+        <div class="legal-grid">
+            {% for norma in base_legal %}
+            <div class="legal-card">
+                <div class="legal-card-header">
+                    <span class="legal-badge">{{ norma.numero|cut:"Decreto-Ley "|cut:"Resolución " }}</span>
+                    <h3>{{ norma.titulo }}</h3>
+                    <p class="legal-subtitle">{{ norma.subtitulo }}</p>
+                </div>
+                <div class="legal-card-body">
+                    <p>{{ norma.descripcion }}</p>
+                </div>
+                <div class="legal-card-footer">
+                    <h4><i class="fas fa-lightbulb"></i> Datos Relevantes</h4>
+                    <ul class="datos-list">
+                        {% for dato in norma.datos_curiosos %}
+                            <li>{{ dato }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="section-action">
+            <a href="{% url 'base_legal' %}" class="btn-outline">
+                <i class="fas fa-arrow-right"></i> Ver Base Legal Completa con Artículos
+            </a>
+        </div>
+    </section>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0 60px 0;">
+
+    <!-- ═══ Responsabilidades por Rol ═══ -->
+    <section class="section">
+        <h2 class="section-title">
+            <i class="fas fa-user-shield"></i> Responsabilidades según la Normativa
+        </h2>
+        <p class="section-subtitle">
+            Funciones que la base legal cubana asigna al Administrador de Red
+            y al Responsable de Seguridad Informática de cada entidad.
+        </p>
+
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-header role-header-red">
+                    <i class="fas fa-network-wired"></i>
+                    <h3>{{ responsabilidades.admin_red.titulo }}</h3>
+                </div>
+                <div class="role-body">
+                    <h4>Funciones principales:</h4>
+                    <ol class="funciones-list">
+                        {% for func in responsabilidades.admin_red.funciones %}
+                            <li>{{ func }}</li>
+                        {% endfor %}
+                    </ol>
+                    <div class="role-legal-ref">
+                        <i class="fas fa-book-open"></i>
+                        <span><strong>Base legal:</strong> {{ responsabilidades.admin_red.base_legal }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="role-card">
+                <div class="role-header role-header-sec">
+                    <i class="fas fa-shield-halved"></i>
+                    <h3>{{ responsabilidades.seguridad.titulo }}</h3>
+                </div>
+                <div class="role-body">
+                    <h4>Funciones principales:</h4>
+                    <ol class="funciones-list">
+                        {% for func in responsabilidades.seguridad.funciones %}
+                            <li>{{ func }}</li>
+                        {% endfor %}
+                    </ol>
+                    <div class="role-legal-ref">
+                        <i class="fas fa-book-open"></i>
+                        <span><strong>Base legal:</strong> {{ responsabilidades.seguridad.base_legal }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0 60px 0;">
+
+    <!-- ═══ Características del Sistema ═══ -->
+    <section class="section">
+        <h2 class="section-title">
+            <i class="fas fa-microchip"></i> Características de la Suite
+        </h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-users-gear"></i>
+                <h3>Gestión de Usuarios</h3>
+                <p>Roles diferenciados, contraseñas encriptadas, protección de URLs.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-server"></i>
+                <h3>Inventario de Equipos</h3>
+                <p>Inventario detallado de PCs con monitoreo de cambios de hardware.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-folder-open"></i>
+                <h3>FTP de Documentos</h3>
+                <p>Compartir archivos con control de acceso por departamento.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-comments"></i>
+                <h3>Chat Interno</h3>
+                <p>Comunicación en tiempo real entre usuarios del sistema.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-file-pdf"></i>
+                <h3>Reportes PDF</h3>
+                <p>Generación de inventarios en PDF con formato profesional.</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-bell"></i>
+                <h3>Alertas y Notificaciones</h3>
+                <p>Detección de cambios de hardware con alertas automáticas.</p>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

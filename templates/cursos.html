@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block titulo %}Capacitación{% endblock %}
+{% block contenido %}
+<div class="page-header">
+    <h1><i class="fas fa-graduation-cap"></i> Módulo de Capacitación</h1>
+    <p>Res. 128/2019 Art. 30: Formación y concienciación del personal en seguridad informática.</p>
+</div>
+
+<div class="features-grid">
+    {% for curso in cursos %}
+    <div class="feature-card" style="flex-direction: column; justify-content: space-between; min-height: 200px;">
+        <div>
+            <i class="fas fa-book-open" style="color: var(--accent-blue); margin-bottom: 12px;"></i>
+            <h3 style="margin-bottom: 8px;">{{ curso.titulo }}</h3>
+            <p>{{ curso.descripcion|truncatewords:20 }}</p>
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 8px;">{{ curso.preguntas|length }} preguntas</p>
+        </div>
+        <div style="margin-top: 15px;">
+            {% if curso.id in cursos_aprobados %}
+                <span class="badge badge-green" style="font-size: 0.85rem; padding: 6px 12px;"><i class="fas fa-check-circle"></i> APROBADO</span>
+            {% else %}
+                <a href="{% url 'tomar_curso' curso.id %}" class="btn-primary btn-full" style="font-size: 0.85rem; justify-content: center;">
+                    <i class="fas fa-play"></i> Tomar Evaluación
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <p class="empty-text">No hay cursos disponibles aún.</p>
+    {% endfor %}
+</div>
+{% endblock %}

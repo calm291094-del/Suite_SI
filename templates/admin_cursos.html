@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block titulo %}Gestión de Cursos{% endblock %}
+{% block contenido %}
+<div class="admin-page">
+    <div class="page-header">
+        <h1><i class="fas fa-graduation-cap"></i> Gestión de Cursos de Capacitación</h1>
+        <div class="header-actions">
+            <span class="badge" style="background:rgba(0,245,212,0.1); color:var(--accent-cyan); padding: 6px 12px;">Total: {{ total_cursos }}</span>
+            <button class="btn-primary" onclick="abrirModalCrear()">
+                <i class="fas fa-plus"></i> Nuevo Curso
+            </button>
+        </div>
+    </div>
+
+    <!-- Tabla de Datos -->
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Título</th>
+                    <th>Nº Preguntas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for curso in cursos %}
+                <tr class="table-row-hover" id="row-curso-{{ curso.id }}">
+                    <td><span class="comp-count">CUR-{{ curso.id }}</span></td>
+                    <td><strong>{{ curso.titulo }}</strong></td>
+                    <td><span class="badge badge-blue">{{ curso.num_preguntas }} preguntas</span></td>
+                    <td>
+                        <div class="action-group">
+                            <button onclick="abrirModalEditar({{ curso.id }})" class="btn-sm" title="Editar">
+                                <i class="fas fa-pen"></i>
+                            </button>
+                            <button onclick="eliminarCurso({{ curso.id }})" class="btn-sm btn-danger" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="empty-text">No hay cursos creados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ═══ MODAL PARA CREAR/EDITAR ═══ -->
+<div class="modal" id="cursoModal" style="display:none;">
+    <div class="modal-overlay" onclick="cerrarModal()"></div>
+    <div class="modal-content modal-lg">
+        <h3 id="modalTitulo" style="margin-bottom:20px;"><i class="fas fa-book-open"></i> Nuevo Curso</h3>
+        
+        <form id="cursoForm" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="curso_id" id="cursoId" value="">
+            
+            <div class="form-group">
+                <label><i class="fas fa-heading"></i> Título</label>
+                {{ form.titulo }}
+                {% if form.titulo.errors %}<span class="field-error">{{ form.titulo.errors.0 }}</span>{% endif %}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-align-left"></i> Descripción</label>
+                {{ form.descripcion }}
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-code"></i> Preguntas (JSON)</label>
+                {{ form.preguntas }}
+                <span class="form-hint">Formato: [{"p": "¿Pregunta?", "o": ["Opc1", "Opc2"], "r": 0}]. "r" es el índice de la respuesta correcta (empieza en 0).</span>
+                {% if form.preguntas.errors %}<span class="field-error">{{ form.preguntas.errors.0 }}</span>{% endif %}
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-outline" onclick="cerrarModal()">Cancelar</button>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Funciones para controlar el Modal
+function abrirModalCrear() {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-plus"></i> Nuevo Curso';
+    document.getElementById('cursoId').value = '';
+    document.getElementById('cursoForm').reset();
+    document.getElementById('cursoModal').style.display = 'flex';
+}
+
+function abrirModalEditar(id) {
+    document.getElementById('modalTitulo').innerHTML = '<i class="fas fa-pen"></i> Editar Curso';
+    // Hacemos petición fetch para obtener los datos actuales y llenar el form
+    fetch(`/api/cursos/datos/${id}/`) // Crearemos esta mini-API abajo
+    .then(r => r.json())
+    .then(data => {
+        document.getElementById('cursoId').value = data.id;
+        document.querySelector('[name="titulo"]').value = data.titulo;
+        document.querySelector('[name="descripcion"]').value = data.descripcion;
+        document.querySelector('[name="preguntas"]').value = JSON.stringify(data.preguntas);
+        document.getElementById('cursoModal').style.display = 'flex';
+    });
+}
+
+function cerrarModal() {
+    document.getElementById('cursoModal').style.display = 'none';
+}
+
+// Función para eliminar con confirmación
+function eliminarCurso(id) {
+    if (!confirm('¿Está seguro de que desea eliminar este curso? Esta acción es irreversible.')) return;
+    
+    fetch(`/api/admin/cursos/eliminar/${id}/`, {
+        method: 'POST',
+        headers: { 'X-CSRFToken': getCSRF() }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.ok) {
+            // Animación de salida para la fila
+            const fila = document.getElementById(`row-curso-${id}`);
+            fila.style.opacity = '0';
+            fila.style.transform = 'translateX(-20px)';
+            setTimeout(() => fila.remove(), 300);
+            showNotification('Curso eliminado correctamente', 'success');
+        } else {
+            showNotification(data.error || 'Error al eliminar', 'error');
+        }
+    });
+}
+</script>
+{% endblock %}
