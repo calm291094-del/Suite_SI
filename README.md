@@ -68,48 +68,69 @@ Suite_SI/
 ```bash
 git clone https://github.com/tu-usuario/Suite_SI.git
 cd Suite_SI
+```
 
 2. Crear y activar un entorno virtual
+```bash
 python -m venv venv
 source venv/bin/activate   # Linux/macOS
 # o
 venv\Scripts\activate      # Windows
+```
 
 3. Instalar dependencias
+```bash
 pip install -r requirements.txt
+```
 
-4. Configurar variables de entorno (opcional)
+5. Configurar variables de entorno (opcional)
+```bash
 # En Linux/macOS
 export SECRET_KEY="tu-clave-secreta-aqui"
 # En Windows (CMD)
 set SECRET_KEY="tu-clave-secreta-aqui"
+```
 
 5. Ejecutar migraciones
+```bash
 python manage.py makemigrations
 python manage.py migrate
+```
 
 6. Crear el superusuario root
+```bash
 python manage.py crear_root
+```
 Este comando crea automáticamente un usuario root con rol root y configura su perfil.
 
 7. Crear datos iniciales (departamentos)
+```bash
 python manage.py crear_datos_iniciales
+```
 
 8. Iniciar el servidor de desarrollo
+```bash
 python manage.py runserver
+```
 
 9. Acceder a la aplicación
+```bash
     Abre tu navegador en http://127.0.0.1:8000
 ```
 
 🛠️ Comandos útiles
 # Crear superusuario root
+```bash
 python manage.py crear_root
+```
 
 # Crear datos iniciales (departamentos)
+```bash
 python manage.py crear_datos_iniciales
+```
 
 # Crear un curso de capacitación desde la consola
+```bash
 python manage.py shell -c "
 from core.models import CursoCapacitacion
 CursoCapacitacion.objects.create(
@@ -118,9 +139,12 @@ CursoCapacitacion.objects.create(
     preguntas='[{\"p\": \"¿Qué Decreto-Ley es la norma marco?\", \"o\": [\"DL 35/2021\", \"DL 370/2019\"], \"r\": 1}]'
 )
 "
+```
 
 # Generar PDF del inventario (desde el navegador)
+```bash
 # Visita: /inventario/pdf/?departamento=1
+```
 
 # Ver logs en producción (Render)
 # Desde el dashboard de Render → Logs
