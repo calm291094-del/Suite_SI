@@ -1,0 +1,95 @@
+suite_seguridad
+/
++-- manage.py
+
++-- requirements.txt
+
++-- suite_seguridad/
+
+¦   +-- __init__.py
+
+¦   +-- settings.py
+
+¦   +-- urls.py
+
+¦   +-- wsgi.py
++-- core/
+
+¦   +-- __init__.py
+
+¦   +-- admin.py
+
+¦   +-- apps.py
+
+¦   +-- models.py
+
+¦   +-- views.py
+
+¦   +-- forms.py
+
+¦   +-- urls.py
+
+¦   +-- decorators.py
+
+¦   +-- signals.py
+
+¦   +-- utils.py
+
+¦   +-- management/
+
+¦       +-- commands/
+
+¦           +-- crear_root.py
++-- templates/
+
+¦   +-- base.html
+
+¦   +-- login.html
+
+¦   +-- register.html
+
+¦   +-- home.html
+
+¦   +-- dashboard.html
+
+¦   +-- base_legal.html
+
+¦   +-- efemerides.html
+
+¦   +-- enlaces.html
+
+¦   +-- documentos.html
+
+¦   +-- subir_documento.html
+
+¦   +-- chat.html
+
+¦   +-- admin_usuarios.html
+
+¦   +-- admin_inventario.html
+
+¦   +-- agregar_equipo.html
+
+¦   +-- editar_equipo.html
+
+¦   +-- notificaciones.html
++-- static/
+
+¦   +-- css/
+
+¦   
+¦   +-- main.css
+
+¦   +-- js/
+
+¦       +-- main.js
+
+¦       +-- auth.js
+
+¦       +-- chat.js
+
+¦       +-- inventario.js
+
++-- media/
+    
++-- documentos/
