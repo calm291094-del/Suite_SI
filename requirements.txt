@@ -1,6 +1,6 @@
 Django==4.2.7
 reportlab==4.0.7
-Pillow==10.1.0
+Pillow>=11.1.0
 django-widget-tweaks==1.5.0
 pyotp==2.9.0
 qrcode==7.4.2
