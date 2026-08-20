@@ -97,12 +97,12 @@
 
     <!-- Barra de navegación superior -->
     <nav class="navbar" role="navigation" aria-label="Barra de navegación principal">
-        <div class="navbar-left">
-            <a href="#" class="navbar-brand" id="sidebarToggleBtn" onclick="toggleSidebar(event)" aria-label="Abrir menú lateral">
-                <i class="fas fa-shield-alt"></i> <!-- Cambiado a fa-shield-alt (FA5) o fa-shield-halved (FA6) -->
-                <span class="brand-text">SuiteSeg<span class="accent">.cu</span></span>
-            </a>
-        </div>
+<div class="navbar-left">
+    <a href="/" class="navbar-brand" id="sidebarToggleBtn" onclick="toggleSidebar(event)" aria-label="Ir al inicio">
+        <i class="fas fa-shield-alt"></i>
+        <span class="brand-text">SuiteSeg<span class="accent">.cu</span></span>
+    </a>
+</div>
 
         <div class="navbar-right">
             {% if user.is_authenticated %}
