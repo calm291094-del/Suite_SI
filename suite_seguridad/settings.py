@@ -41,7 +41,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 #   - Cifrar datos sensibles internamente
 # ⚠️ NUNCA subir esta clave a GitHub. En producción se lee desde
 #    una variable de entorno (ej: os.environ.get('SECRET_KEY'))
-SECRET_KEY = 'django-insecure-cambiar-esta-clave-en-produccion-4815162342-x'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-cambiar-esta-clave-en-produccion-4815162342-x')
 
 # DEBUG: Modo de depuración
 #   True  = Muestra trazas de errores detalladas en el navegador.
@@ -51,7 +51,7 @@ SECRET_KEY = 'django-insecure-cambiar-esta-clave-en-produccion-4815162342-x'
 #
 # NOTA: Si DEBUG=False y no agregas tu dominio a ALLOWED_HOSTS,
 #       Django devolverá error 400 (Bad Request) en todas las páginas.
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'   # Convierte string a booleano
 
 # ALLOWED_HOSTS: Lista de dominios/IPs desde los cuales Django acepta peticiones.
 #
@@ -62,7 +62,7 @@ DEBUG = True
 #   ALLOWED_HOSTS = ['cyseg.kalm', '192.168.1.100']
 #
 # Por ahora con DEBUG=True, ['*'] funciona pero no es recomendable para red.
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # ══════════════════════════════════════════════════════════════════════════
 # APLICACIONES INSTALADAS
@@ -139,6 +139,7 @@ INSTALLED_APPS = [
 #                              porque necesita acceder a request.user.
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -317,6 +318,8 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ══════════════════════════════════════════════════════════════════════════
 # ARCHIVOS MULTIMEDIA (Documentos subidos por usuarios)
