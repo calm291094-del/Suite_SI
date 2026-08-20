@@ -10,38 +10,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
     <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta name="theme-color" content="#0a0e1a"> <!-- Color para barra de navegación en móviles -->
+    
     <title>{% block titulo %}Suite de Seguridad Informática{% endblock %}</title>
     
+    <!-- Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+    
+    <!-- Fuentes (mejor con display=swap para evitar FOIT) -->
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/all.min.css' %}" crossorigin="anonymous">
+    
+    <!-- Font Awesome 6 (actualizado) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" 
+          integrity="sha512-Evv84LJiZvyLb6I6kP3t0BtiUCgN/DqI4JbZP0sL4Zy7G7W7F3LbM9X/x3KPVB7x52XG2U5RwQXvP7qO8rH6eA==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <!-- Estilos principales -->
     <link rel="stylesheet" href="{% static 'css/main.css' %}">
 
-    <!-- =============================================================================
-       ESTILOS CSS INTEGRADOS (Submenús, Modo Oscuro y Chat Flotante)
-       ============================================================================= -->
+    <!-- Estilos inline (mejor mantener en main.css pero aquí van los críticos) -->
     <style>
         /* ============================================
-           NOTIFICACIÓN
+           NOTIFICACIÓN FLOTANTE (toast)
            ============================================ */
         .notificacion {
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background: #2c3e50;
-            color: white;
+            background: var(--bg-secondary, #2c3e50);
+            color: var(--text-primary, white);
             padding: 12px 20px;
             border-radius: 8px;
             font-size: 14px;
             z-index: 10000;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            font-family: Arial, sans-serif;
+            font-family: 'Space Grotesk', sans-serif;
             animation: fadeIn 0.3s ease;
+            max-width: 90%;
         }
-
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ============================================
+           SOPORTE PARA MODO OSCURO (toggle en JS)
+           ============================================ */
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #141b2b;
+            --bg-card: #1a2538;
+            --text-primary: #e8edf5;
+            --text-secondary: #a0b4cc;
+            --accent-cyan: #00d4ff;
+            --accent-blue: #4d7cf7;
+            --border-color: #2a3a5a;
+            --shadow-color: rgba(0,0,0,0.5);
+        }
+        /* Tema claro (opcional, se activa con clase 'light-mode' en body) */
+        body.light-mode {
+            --bg-primary: #f0f4fa;
+            --bg-secondary: #e1e8f0;
+            --bg-card: #ffffff;
+            --text-primary: #1a2332;
+            --text-secondary: #3a4a5a;
+            --border-color: #c0d0e0;
+            --shadow-color: rgba(0,0,0,0.1);
+        }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background 0.3s, color 0.3s;
         }
     </style>
 
@@ -49,18 +88,18 @@
 </head>
 <body>
 
-    <!-- Efectos visuales CRT/Grain -->
-    <div class="crt-scanlines"></div>
-    <div class="film-grain"></div>
+    <!-- Efectos visuales CRT/Grain (opcionales, se pueden quitar) -->
+    <div class="crt-scanlines" aria-hidden="true"></div>
+    <div class="film-grain" aria-hidden="true"></div>
 
     <!-- Overlay oscuro al abrir sidebar -->
-    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
 
     <!-- Barra de navegación superior -->
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="Barra de navegación principal">
         <div class="navbar-left">
-            <a href="#" class="navbar-brand" id="sidebarToggleBtn" onclick="toggleSidebar(event)">
-                <i class="fas fa-shield-halved"></i>
+            <a href="#" class="navbar-brand" id="sidebarToggleBtn" onclick="toggleSidebar(event)" aria-label="Abrir menú lateral">
+                <i class="fas fa-shield-alt"></i> <!-- Cambiado a fa-shield-alt (FA5) o fa-shield-halved (FA6) -->
                 <span class="brand-text">SuiteSeg<span class="accent">.cu</span></span>
             </a>
         </div>
@@ -69,7 +108,7 @@
             {% if user.is_authenticated %}
                 <!-- Notificaciones -->
                 <div class="notif-wrapper">
-                    <button class="notif-btn" onclick="toggleNotifPanel()" aria-label="Notificaciones">
+                    <button class="notif-btn" onclick="toggleNotifPanel()" aria-label="Notificaciones" title="Notificaciones">
                         <i class="fas fa-bell"></i>
                         {% if notifs_count > 0 %}
                             <span class="notif-badge" id="notifBadge">{{ notifs_count }}</span>
@@ -77,10 +116,10 @@
                             <span class="notif-badge hidden" id="notifBadge">0</span>
                         {% endif %}
                     </button>
-                    <div class="notif-panel hidden" id="notifPanel">
+                    <div class="notif-panel hidden" id="notifPanel" role="dialog" aria-label="Panel de notificaciones">
                         <div class="notif-header">
                             <h3>Notificaciones</h3>
-                            <button onclick="marcarTodasLeidas()" title="Marcar todas como leídas">
+                            <button onclick="marcarTodasLeidas()" title="Marcar todas como leídas" aria-label="Marcar todas como leídas">
                                 <i class="fas fa-check-double"></i>
                             </button>
                         </div>
@@ -104,6 +143,11 @@
                         {% endif %}
                     </span>
                 </div>
+
+                <!-- Toggle modo oscuro (opcional) -->
+                <button id="themeToggle" class="theme-toggle-btn" aria-label="Cambiar tema" title="Cambiar tema">
+                    <i class="fas fa-moon"></i>
+                </button>
             {% else %}
                 <a href="{% url 'login' %}" class="btn-nav">
                     <i class="fas fa-right-to-bracket"></i> Iniciar Sesión
@@ -120,9 +164,9 @@
         
         {% if user.is_authenticated %}
         <!-- Sidebar deslizable -->
-        <aside class="sidebar" id="sidebar">
+        <aside class="sidebar" id="sidebar" role="navigation" aria-label="Menú lateral">
             <div class="sidebar-content" id="sidebarContent">
-                <button class="sidebar-close" onclick="closeSidebar()" title="Cerrar menú">
+                <button class="sidebar-close" onclick="closeSidebar()" title="Cerrar menú" aria-label="Cerrar menú">
                     <i class="fas fa-times"></i>
                 </button>
 
@@ -160,11 +204,9 @@
                     <a href="{% url 'enlaces' %}" class="sidebar-link {% block active_links %}{% endblock %}">
                         <i class="fas fa-link"></i> Enlaces Web
                     </a>
-                    <!-- Debajo de Enlaces Web -->
                     <a href="{% url 'cursos' %}" class="sidebar-link">
                         <i class="fas fa-graduation-cap"></i> Capacitación
                     </a>
-                    <!-- Debajo del menú de Administración (solo admins) -->
                     {% if user.perfil.es_admin %}
                     <a href="{% url 'politicas' %}" class="sidebar-link">
                         <i class="fas fa-file-shield"></i> Políticas Seguridad
@@ -228,10 +270,10 @@
         {% endif %}
 
         <!-- Contenido principal -->
-        <main class="main-content {% if not user.is_authenticated %}full-width{% endif %}">
+        <main class="main-content {% if not user.is_authenticated %}full-width{% endif %}" role="main">
             
             {% if password_dias_restantes is not None and password_dias_restantes <= 7 and password_dias_restantes > 0 %}
-            <div class="message message-warning" style="margin-bottom:16px;">
+            <div class="message message-warning" style="margin-bottom:16px;" role="alert">
                 <i class="fas fa-clock"></i>
                 <span>Su contraseña expira en <strong>{{ password_dias_restantes }} día{{ password_dias_restantes|pluralize }}</strong>. 
                 <a href="{% url 'cambiar_password' %}" style="color:var(--accent-cyan);font-weight:600;">Cambiar ahora</a></span>
@@ -250,7 +292,7 @@
                             {% endif %}
                         "></i>
                         <span>{{ message }}</span>
-                        <button onclick="this.parentElement.remove()" class="message-close">
+                        <button onclick="this.parentElement.remove()" class="message-close" aria-label="Cerrar mensaje">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -263,98 +305,46 @@
     </div>
 
     <!-- Botón volver arriba -->
-    <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Volver arriba">
+    <button class="scroll-top-btn" id="scrollTopBtn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Volver arriba" aria-label="Volver al inicio">
         <i class="fas fa-chevron-up"></i>
     </button>
 
-    <!-- CSRF Token -->
-    <script>
-        function getCSRF() {
-            return document.querySelector('input[name="csrfmiddlewaretoken"]')?.value 
-                   || '{{ csrf_token }}';
-        }
-    </script>
+    <!-- CSRF Token (necesario para AJAX) -->
     <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
 
-    <script src="{% static 'js/main.js' %}"></script>
+    <!-- Scripts con defer para no bloquear renderizado -->
+    <script defer src="{% static 'js/main.js' %}"></script>
+    
+    <!-- Script para el toggle de tema oscuro (opcional) -->
+    <script defer>
+        document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', function() {
+                    document.body.classList.toggle('light-mode');
+                    const icon = this.querySelector('i');
+                    icon.classList.toggle('fa-moon');
+                    icon.classList.toggle('fa-sun');
+                });
+            }
+        });
+    </script>
 
     {% block scripts_extras %}{% endblock %}
 
-    
-<!-- ==========================================
-     JAVASCRIPT DE PROTECCION CONTRA VISTA DE CODIGO FUENTE
-     ========================================== -->
-<script>
-    // --- Función para mostrar notificaciones ---
-    function mostrarNotificacion(mensaje) {
-        const existente = document.querySelector('.notificacion');
-        if (existente) existente.remove();
-        
-        const notif = document.createElement('div');
-        notif.className = 'notificacion';
-        notif.textContent = mensaje;
-        
-        document.body.appendChild(notif);
-        
-        setTimeout(() => {
-            notif.style.opacity = '0';
-            notif.style.transform = 'translateY(10px)';
-            notif.style.transition = 'all 0.3s ease';
-            setTimeout(() => notif.remove(), 300);
-        }, 3000);
-    }
-
-    // --- Capa 1: Deshabilitar clic derecho ---
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        mostrarNotificacion('⚠️ Acción no permitida');
-        return false;
-    });
-
-    // --- Capa 2: Bloquear atajos de teclado comunes ---
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'u') {
+    <!-- ==========================================
+       PRODUCCIÓN: Eliminar o comentar la protección contra inspección
+       ========================================== -->
+    <!-- 
+    <script>
+        // Deshabilitar clic derecho (no recomendado en producción)
+        document.addEventListener('contextmenu', function(e) {
             e.preventDefault();
             mostrarNotificacion('⚠️ Acción no permitida');
             return false;
-        }
-        if (e.ctrlKey && e.key === 's') {
-            e.preventDefault();
-            mostrarNotificacion('⚠️ Datos guardados');
-            return false;
-        }
-        if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'U')) {
-            e.preventDefault();
-            return false;
-        }
-        if (e.key === 'F12') {
-            e.preventDefault();
-            return false;
-        }
-    });
-
-    // --- Capa 3: Deshabilitar selección de texto ---
-    document.addEventListener('selectstart', function(e) {
-        e.preventDefault();
-    });
-
-    // --- Capa 4: Deshabilitar arrastrar ---
-    document.addEventListener('dragstart', function(e) {
-        e.preventDefault();
-    });
-
-    // --- Capa 5: Ocultar consola (opcional) ---
-    Object.defineProperty(window, 'console', {
-        value: {
-            log: function() {},
-            dir: function() {},
-            table: function() {},
-            warn: function() {},
-            error: function() {}
-        },
-        writable: false,
-        configurable: false
-    });
-</script>
+        });
+        // ... etc
+    </script>
+    -->
 </body>
 </html>
