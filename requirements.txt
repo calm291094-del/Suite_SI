@@ -4,3 +4,4 @@ Pillow>=11.1.0
 django-widget-tweaks==1.5.0
 pyotp==2.9.0
 qrcode==7.4.2
+gunicorn>=23.0.0
